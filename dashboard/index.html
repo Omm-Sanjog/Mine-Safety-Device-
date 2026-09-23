@@ -520,7 +520,7 @@ en:{
   trDown:'Conditions are easing on the current trend.',
   trFlat:'Holding steady on the current trend.',
   hr:'hr', hrs:'hrs', updated:'updated {t}',
-  mineRt:'{n} nodes · {e} elevated',
+  mineRt:'{n} nodes · {e} elevated', mineRt1:'1 node · {e} elevated',
   noAlTitle:'No alerts', noAlBody:'Alerts appear once telemetry arrives.',
   clearTitle:'All clear', clearBody:'No threshold events this session.',
   events:'{n} events',
@@ -593,7 +593,7 @@ hi:{
   trDown:'मौजूदा रुझान पर स्थितियाँ सुधर रही हैं।',
   trFlat:'मौजूदा रुझान पर स्थिर।',
   hr:'घंटा', hrs:'घंटे', updated:'अद्यतन {t}',
-  mineRt:'{n} नोड · {e} बढ़े हुए',
+  mineRt:'{n} नोड · {e} बढ़े हुए', mineRt1:'1 नोड · {e} बढ़ा हुआ',
   noAlTitle:'कोई अलर्ट नहीं', noAlBody:'टेलीमेट्री आने पर अलर्ट दिखाई देंगे।',
   clearTitle:'सब सामान्य', clearBody:'इस सत्र में कोई सीमा घटना नहीं।',
   events:'{n} घटनाएँ',
@@ -666,7 +666,7 @@ or:{
   trDown:'ବର୍ତ୍ତମାନ ଧାରାରେ ଅବସ୍ଥା ଉନ୍ନତ ହେଉଛି।',
   trFlat:'ବର୍ତ୍ତମାନ ଧାରାରେ ସ୍ଥିର।',
   hr:'ଘଣ୍ଟା', hrs:'ଘଣ୍ଟା', updated:'ଅଦ୍ୟତନ {t}',
-  mineRt:'{n} ନୋଡ୍ · {e} ବର୍ଦ୍ଧିତ',
+  mineRt:'{n} ନୋଡ୍ · {e} ବର୍ଦ୍ଧିତ', mineRt1:'1 ନୋଡ୍ · {e} ବର୍ଦ୍ଧିତ',
   noAlTitle:'କୌଣସି ସତର୍କତା ନାହିଁ', noAlBody:'ଟେଲିମେଟ୍ରି ଆସିବା ପରେ ସତର୍କତା ଦେଖାଯିବ।',
   clearTitle:'ସବୁ ସ୍ୱାଭାବିକ', clearBody:'ଏହି ସେସନରେ କୌଣସି ସୀମା ଘଟଣା ନାହିଁ।',
   events:'{n} ଘଟଣା',
@@ -895,7 +895,7 @@ function renderHero(){
   document.getElementById('fcs').innerHTML=fh;
   var c=contrib(),tot=0;c.forEach(function(x){tot+=x.wt;});
   var dh='';c.sort(function(a,b){return b.wt-a.wt;}).forEach(function(x){
-    var sh=tot>0?x.wt/tot*100:0,col=sh>34?'--coral':(sh>22?'--gold':'--cyan');
+    var sh=tot>0?x.wt/tot*100:0,pts=x.wt*100,col=pts>=15?'--coral':(pts>=7?'--gold':'--cyan'); // colour by index points added, not share
     dh+='<div class="dr"><span class="n">'+x.n+'</span><span class="t">'+
         '<span class="f" style="width:'+sh.toFixed(0)+'%;background:var('+col+')"></span></span>'+
         '<span class="p">'+sh.toFixed(0)+'%</span></div>';});
@@ -1068,9 +1068,9 @@ function drawMine(anim){
     if(!compact){x.font=f2;x.fillStyle=dim;x.fillText(loc,bx+13,by+28);}
   });
   if(!anim){
-    document.getElementById('mineRt').textContent=t('mineRt',{n:vis.length,
+    document.getElementById('mineRt').textContent=t(vis.length===1?'mineRt1':'mineRt',{n:vis.length,
       e:vis.filter(function(n){return nodeIdx(n)>=52;}).length});
-    document.getElementById('fNodes').textContent=vis.length+'/'+NODES.length;
+    document.getElementById('fNodes').textContent=MODE==='serial'?String(vis.length):vis.length+'/'+NODES.length;
     if(HOV)showTip();
   }
 }
@@ -1311,9 +1311,9 @@ function onLine(line){
     if(k==='prs'){if(v>20000)v/=100; /* sent in Pa */ PRS.push({t:now,v:v});if(PRS.length>400)PRS.shift();SER.has.dprs=true;}
     S[k]=Math.max(0,v);SER.has[k]=true;}
   derive();
-  if(d.node){var nd=NODES.filter(function(n){return n.id===d.node;})[0];
-    if(nd){if(!nd.seen)pushAl('i','aNodeNew',{id:nd.id});nd.seen=now;}}
-  else NODES.forEach(function(n){n.seen=now;}); // no node id: treat as the panel aggregate
+  // only nodes that actually report appear on the plan; a line without a node id is node N-101
+  var nd=NODES.filter(function(n){return n.id===(d.node||'N-101');})[0];
+  if(nd){if(!nd.seen)pushAl('i','aNodeNew',{id:nd.id});nd.seen=now;}
   SER.lastData=now;SER.fresh=true;SER.staleWarned=false;
   if(!SER.got){SER.got=true;running=true;t0=now;pushAl('i','aSerFirst');setSerState('live');renderAll();}
   else if(SER.state!=='live')setSerState('live');
