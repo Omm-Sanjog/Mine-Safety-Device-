@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VAYU · Mine Safety Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --r:5px;
+  /* Indic fallbacks: Latin glyphs come from the brand fonts, Devanagari/Odia glyphs fall through to Noto */
+  --indic:'Noto Sans Devanagari','Noto Sans Oriya';
+  --fh:'Barlow Condensed',var(--indic),sans-serif;
+  --fb:'IBM Plex Sans',var(--indic),sans-serif;
+  --fd:'IBM Plex Mono',var(--indic),monospace;
+}
+html[data-theme="dark"]{
+  --bg:#101317; --surface:#181C22; --sunken:#12161B; --tile:#1B212A;
+  --line:rgba(150,180,205,.14); --line2:rgba(150,180,205,.3);
+  --text:#EAF1F6; --muted:#9DB0C2; --dim:#8497A8;
+  --mint:#06D6A0; --cyan:#3DC5F0; --gold:#FFD60A; --coral:#FF6B6B;
+  --mintF:rgba(6,214,160,.15); --cyanF:rgba(61,197,240,.15);
+  --goldF:rgba(255,214,10,.15); --coralF:rgba(255,107,107,.15);
+  --rock:#1C222A; --rock2:#262E39; --void:#0B0E12; --air:#9AA8FF;
+}
+html[data-theme="light"]{
+  --bg:#E9EDF1; --surface:#FFFFFF; --sunken:#F3F6F8; --tile:#F7F9FB;
+  --line:rgba(16,32,58,.14); --line2:rgba(16,32,58,.28);
+  --text:#0F1720; --muted:#42556A; --dim:#5A6C7E;
+  --mint:#046F52; --cyan:#00648C; --gold:#8A6700; --coral:#BC3348;
+  --mintF:rgba(4,111,82,.11); --cyanF:rgba(0,100,140,.11);
+  --goldF:rgba(138,103,0,.11); --coralF:rgba(188,51,72,.11);
+  --rock:#D5DDE5; --rock2:#C4CFDA; --void:#FBFCFD; --air:#4453C4;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;
+  -webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+button{font-family:var(--fb);cursor:pointer}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+canvas{display:block;width:100%}
+
+/* micro-label: the smallest type in the interface, never below 11px */
+.ml{font-family:var(--fd);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);font-weight:500}
+
+/* ============== HOME ============== */
+#home{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:28px;background:var(--bg);overflow:auto}
+#home.off{display:none}
+.hstrata{position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background-image:repeating-linear-gradient(177deg,transparent 0 30px,var(--line) 30px 31px);
+  mask-image:radial-gradient(1000px 560px at 50% 42%,#000 4%,transparent 76%)}
+.hin{position:relative;width:100%;max-width:880px}
+.htop{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:30px}
+.hmark{display:flex;align-items:center;gap:14px}
+.hmark .g{width:46px;height:46px;border:2px solid var(--mint);border-radius:4px;display:grid;place-items:center;
+  font-family:var(--fh);font-weight:700;font-size:23px;color:var(--mint);flex:none}
+.hmark h1{margin:0;font-family:var(--fh);font-size:31px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.hmark p{margin:2px 0 0;font-family:var(--fd);font-size:11.5px;color:var(--dim);letter-spacing:.1em}
+
+/* language switcher */
+.lang{display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+.seg{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--line);border-radius:5px;background:var(--surface)}
+.seg button{background:none;border:0;border-radius:3px;color:var(--muted);font-size:13.5px;font-weight:500;padding:7px 14px;
+  transition:background .15s,color .15s}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--mintF);color:var(--mint);font-weight:600}
+@media(max-width:760px){.lang{align-items:flex-start}}
+
+.hlede{max-width:600px;margin:0 0 30px;color:var(--muted);font-size:15px;line-height:1.65}
+.hlede b{color:var(--text);font-weight:600}
+.srcs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.srcs{grid-template-columns:1fr}}
+.src{cursor:pointer;text-align:left;padding:24px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);
+  color:var(--text);transition:border-color .18s,transform .18s;display:flex;flex-direction:column;gap:12px;min-height:236px}
+.src:hover{border-color:var(--line2);transform:translateY(-2px)}
+.stag{font-family:var(--fd);font-size:11px;letter-spacing:.13em;text-transform:uppercase;padding:5px 9px;border-radius:3px;align-self:flex-start}
+.src--sim .stag{background:var(--cyanF);color:var(--cyan)}
+.src--live .stag{background:var(--mintF);color:var(--mint)}
+.src h2{margin:0;font-family:var(--fh);font-size:27px;font-weight:600;letter-spacing:.02em}
+.src p{margin:0;font-size:13.5px;line-height:1.6;color:var(--muted);flex:1}
+.src ul{margin:0;padding-left:17px;font-size:12.5px;color:var(--dim);line-height:1.85}
+.sgo{font-family:var(--fd);font-size:12px;letter-spacing:.07em;text-transform:uppercase;margin-top:2px;
+  background:none;border:0;padding:0;text-align:left;align-self:flex-start}
+.src--sim .sgo{color:var(--cyan)} .src--live .sgo{color:var(--mint)}
+.snote{font-size:12px;line-height:1.5;color:var(--dim);margin-top:8px}
+.gw{display:flex;flex-direction:column;gap:10px}
+.conn{display:flex;width:100%;background:var(--sunken)}
+.conn button{flex:1;font-size:12.5px;padding:7px 10px}
+.conn button:disabled{opacity:.45;cursor:not-allowed}
+.gw label{display:block;margin-bottom:6px}
+.gw input{margin:0}
+.gw select{width:100%;background:var(--sunken);border:1px solid var(--line);border-radius:4px;color:var(--text);
+  font-family:var(--fd);font-size:12.5px;padding:9px 10px}
+.gw input{width:100%;background:var(--sunken);border:1px solid var(--line);border-radius:4px;color:var(--text);
+  font-family:var(--fd);font-size:12.5px;padding:10px 11px}
+.hfoot{margin-top:26px;font-size:12px;color:var(--dim);line-height:1.85}
+
+/* ============== SHELL ============== */
+#app{display:none;flex-direction:column;height:100%}
+#app.on{display:flex}
+header.bar{display:flex;align-items:center;gap:14px;padding:11px 18px;background:var(--surface);border-bottom:1px solid var(--line);flex:none}
+.bmark{display:flex;align-items:center;gap:10px}
+.bmark .g{width:32px;height:32px;border:1.6px solid var(--mint);border-radius:4px;display:grid;place-items:center;
+  font-family:var(--fh);font-weight:700;font-size:17px;color:var(--mint)}
+.bmark strong{font-family:var(--fh);font-size:20px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;display:block;line-height:1}
+.bmark span{font-family:var(--fd);font-size:11px;color:var(--dim);letter-spacing:.09em}
+.vsep{width:1px;height:28px;background:var(--line)}
+select.zn{background:var(--sunken);border:1px solid var(--line);border-radius:4px;color:var(--text);font-family:var(--fb);font-size:13px;padding:8px 10px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:3px;font-family:var(--fd);
+  font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;border:1px solid var(--line);color:var(--muted);background:var(--sunken);white-space:nowrap}
+.chip .led{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none}
+.chip[data-t="sim"]{color:var(--cyan);border-color:var(--cyan)} .chip[data-t="sim"] .led{background:var(--cyan)}
+.chip[data-t="ok"]{color:var(--mint);border-color:var(--mint)} .chip[data-t="ok"] .led{background:var(--mint)}
+.chip[data-t="warn"]{color:var(--gold);border-color:var(--gold)} .chip[data-t="warn"] .led{background:var(--gold)}
+.chip[data-t="bad"]{color:var(--coral);border-color:var(--coral)} .chip[data-t="bad"] .led{background:var(--coral)}
+.pulse{animation:pl 1.6s ease-in-out infinite}@keyframes pl{0%,100%{opacity:1}50%{opacity:.28}}
+.grow{flex:1}
+.btn{background:var(--sunken);border:1px solid var(--line);border-radius:4px;color:var(--text);font-size:13px;padding:8px 13px}
+.btn:hover{border-color:var(--line2)}
+.tsw{position:relative;width:56px;height:30px;border-radius:15px;border:1px solid var(--line);background:var(--sunken);padding:0;flex:none}
+.tsw b{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:var(--gold);
+  display:grid;place-items:center;font-size:12px;color:#131313;transition:left .2s}
+html[data-theme="light"] .tsw b{left:28px;background:var(--cyan);color:#fff}
+
+/* ============== LAYOUT ============== */
+.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);gap:12px;padding:12px;overflow:auto}
+@media(max-width:1120px){.main{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-height:0;flex:none}
+.chd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);flex:none}
+.chd h3{margin:0;font-family:var(--fh);font-size:17px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.cbd{padding:14px;flex:1;min-height:0}
+.cbd.tight{padding:10px}
+
+/* mine plan hero */
+.mine{flex:1 1 auto;min-height:392px}
+.mine .cbd{display:flex;flex-direction:column;gap:10px}
+#mineCv{flex:1;min-height:0}
+.mine .cbd{position:relative}
+.chd h3{flex:none}
+.chd .ml{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mtip{position:absolute;z-index:5;pointer-events:none;min-width:180px;max-width:250px;padding:10px 12px;border-radius:6px;
+  background:var(--surface);border:1px solid var(--line2);box-shadow:0 10px 28px rgba(0,0,0,.35);font-size:12.5px;
+  opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+.mtip.on{opacity:1;transform:none}
+.mtip .tt-h{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:var(--fd);font-size:13px}
+.mtip .tt-b{font-family:var(--fd);font-size:11px;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.mtip .tt-l{color:var(--muted);margin-top:5px}
+.mtip .tt-m{color:var(--dim);font-family:var(--fd);font-size:11px;margin-top:6px}
+.legend .lg-g{margin-right:-4px}
+.legend .lg-sep{width:1px;height:14px;background:var(--line)}
+.legend i.ln{width:20px;height:3px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--air) 0 3px,transparent 3px 7px)}
+.legend i.road{background:var(--void);box-shadow:inset 0 0 0 1px var(--line2)}
+.legend i.hatch{background:repeating-linear-gradient(135deg,var(--dim) 0 1px,var(--rock) 1px 4px)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.legend span{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.legend i{width:10px;height:10px;border-radius:50%;display:block}
+.legend i.sq{border-radius:2px;width:14px;height:9px}
+
+/* sensor strip */
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:900px){.strip{grid-template-columns:repeat(2,1fr)}}
+.sq2{padding:10px 11px;border:1px solid var(--line);border-radius:4px;background:var(--tile)}
+.sq2 .k{font-family:var(--fd);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.sq2 .v{font-family:var(--fd);font-size:23px;font-weight:600;line-height:1.15;margin-top:3px;font-variant-numeric:tabular-nums}
+.sq2 .u{font-size:12px;color:var(--dim);margin-left:3px;font-family:var(--fd)}
+.sq2 .bar{height:3px;background:var(--line);border-radius:2px;margin-top:8px;overflow:hidden}
+.sq2 .fil{height:100%;width:0;border-radius:2px;transition:width .5s,background .3s}
+.sq2 .lim{font-family:var(--fd);font-size:11px;color:var(--dim);margin-top:5px}
+.sq2[data-s="ok"] .fil{background:var(--mint)}
+.sq2[data-s="warn"]{border-color:var(--gold)} .sq2[data-s="warn"] .v{color:var(--gold)} .sq2[data-s="warn"] .fil{background:var(--gold)}
+.sq2[data-s="bad"]{border-color:var(--coral)} .sq2[data-s="bad"] .v{color:var(--coral)} .sq2[data-s="bad"] .fil{background:var(--coral)}
+
+/* instability hero */
+.hero .chd{background:linear-gradient(90deg,var(--mintF),transparent)}
+.hero-bd{padding:16px 16px 14px;border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:flex-start;gap:18px}
+.hidx{font-family:var(--fd);font-size:64px;font-weight:600;line-height:1.06;font-variant-numeric:tabular-nums}
+.hmeta{flex:1;padding-top:5px}
+.hcls{font-family:var(--fh);font-size:27px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;line-height:1.1}
+.hsc{font-size:13px;color:var(--muted);line-height:1.55;margin-top:8px}
+.hgauge{height:7px;border-radius:4px;background:var(--line);margin-top:16px;position:relative}
+.hgauge .f{height:100%;width:0;border-radius:4px;transition:width .5s,background .3s}
+.hgauge .m{position:absolute;top:-3px;width:2px;height:13px;background:var(--dim);opacity:.7}
+.hband{display:flex;justify-content:space-between;margin-top:6px}
+.hband span{font-family:var(--fd);font-size:11px;color:var(--dim)}
+
+.fcs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px;border-bottom:1px solid var(--line)}
+.fc{padding:11px 12px;border:1px solid var(--line);border-radius:4px;background:var(--tile)}
+.fc .h{font-family:var(--fd);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.fc .v{font-family:var(--fd);font-size:29px;font-weight:600;margin-top:3px;line-height:1;font-variant-numeric:tabular-nums}
+.fc .b{font-size:12.5px;margin-top:4px;font-weight:600}
+.fc .c{font-family:var(--fd);font-size:11px;color:var(--dim);margin-top:6px}
+
+.drv{padding:14px}
+.drv .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.drv p{margin:0 0 12px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.dr{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.dr .n{font-size:13px;width:150px;flex:none}
+.dr .t{flex:1;height:7px;background:var(--line);border-radius:4px;overflow:hidden}
+.dr .f{height:100%;border-radius:4px;transition:width .5s;display:block}
+.dr .p{font-family:var(--fd);font-size:12px;color:var(--muted);width:40px;text-align:right;flex:none;font-variant-numeric:tabular-nums}
+
+/* wall motion: piezo + gyro */
+.mot{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:760px){.mot{grid-template-columns:1fr}}
+.mpane{border:1px solid var(--line);border-radius:4px;background:var(--tile);padding:11px 12px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.mpane[data-s="warn"]{border-color:var(--gold)} .mpane[data-s="bad"]{border-color:var(--coral)}
+.mhd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mst{font-family:var(--fd);font-size:11px;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.mval{display:flex;align-items:baseline;gap:4px;flex-wrap:wrap}
+.mval b{font-family:var(--fd);font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.mval .u{font-family:var(--fd);font-size:12px;color:var(--dim)}
+.mval .mpk{font-family:var(--fd);font-size:11px;color:var(--dim);margin-left:auto}
+.mlim{font-family:var(--fd);font-size:11px;color:var(--dim)}
+.mpane canvas{width:100%}
+.gyro{display:flex;gap:14px;align-items:center}
+#gyCv{width:128px;height:128px;flex:none}
+.gyr{flex:1;min-width:0}
+.gsub{font-family:var(--fd);font-size:11px;color:var(--dim);margin-top:2px}
+.axes{margin-top:8px}
+.axes .al2{font-family:var(--fd);font-size:11px;color:var(--dim);margin-bottom:2px}
+.ax{display:grid;grid-template-columns:14px 1fr 70px;align-items:center;gap:8px;font-family:var(--fd);font-size:11.5px;color:var(--muted);margin-top:5px}
+.ax .tr{height:6px;background:var(--line);border-radius:3px;position:relative}
+.ax .tr::after{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--line2)}
+.ax .tr i{position:absolute;top:0;bottom:0;border-radius:3px;display:block}
+.ax .v{text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:430px){.gyro{flex-direction:column;align-items:stretch}#gyCv{align-self:center}}
+
+/* serial monitor */
+.mon pre{margin:0;background:var(--sunken);border:1px solid var(--line);border-radius:4px;padding:10px 11px;
+  font-family:var(--fd);font-size:12px;line-height:1.6;color:var(--muted);height:168px;overflow:auto;
+  white-space:pre-wrap;word-break:break-all}
+.mon .hint{margin-top:8px;font-size:12px;color:var(--dim);line-height:1.5}
+.mon .hint code{font-family:var(--fd);font-size:11.5px;color:var(--muted)}
+[hidden]{display:none !important}
+
+/* alerts */
+.alw{flex:1;min-height:150px;overflow:auto;padding:0 14px 14px}
+.al{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.al:last-child{border-bottom:0}
+.al time{font-family:var(--fd);font-size:11.5px;color:var(--dim);flex:none;padding-top:2px}
+.al .sev{font-family:var(--fd);font-size:11px;letter-spacing:.07em;text-transform:uppercase;padding:2px 7px;border-radius:3px;flex:none;height:fit-content;margin-top:1px}
+.al .m{font-size:13px;line-height:1.5}
+.sv-i{background:var(--cyanF);color:var(--cyan)}
+.sv-w{background:var(--goldF);color:var(--gold)}
+.sv-c{background:var(--coralF);color:var(--coral)}
+
+.empty{padding:34px 16px;text-align:center}
+.empty h4{margin:0 0 8px;font-family:var(--fh);font-size:20px;letter-spacing:.04em;font-weight:600}
+.empty p{margin:0 auto;max-width:300px;font-size:13px;color:var(--muted);line-height:1.6}
+
+.foot{flex:none;display:flex;gap:22px;padding:9px 18px;border-top:1px solid var(--line);background:var(--surface);
+  font-family:var(--fd);font-size:11.5px;color:var(--dim);flex-wrap:wrap}
+.foot b{color:var(--muted);font-weight:500}
+
+/* Devanagari and Odia: tracking breaks the headline/conjunct shapes, so remove it */
+html:is([lang="hi"],[lang="or"]) :is(.ml,.stag,.sgo,.hmark h1,.hmark p,.bmark span,.src h2,.chip,.chd h3,
+  .sq2 .k,.hcls,.fc .h,.al .sev,.empty h4,.foot){letter-spacing:0}
+html:is([lang="hi"],[lang="or"]) .hsc,
+html:is([lang="hi"],[lang="or"]) .hlede,
+html:is([lang="hi"],[lang="or"]) .src p{line-height:1.75}
+
+/* --- narrow screens: let the toolbar wrap and stack the panel --- */
+@media(max-width:1000px){
+  header.bar{flex-wrap:wrap;row-gap:9px;padding:10px 12px}
+  .bar .vsep{display:none}
+  .bmark{flex:1 1 100%}
+  .grow{display:none}
+  select.zn{flex:1 1 100%}
+  .chip{flex:1 1 auto;justify-content:center}
+  .btn{flex:1 1 auto}
+  .main{padding:10px;gap:10px}
+  .strip{grid-template-columns:repeat(2,1fr)}
+  .hidx{font-size:52px}
+  .hcls{font-size:23px}
+  .fcs{grid-template-columns:1fr;gap:8px}
+  .dr .n{width:120px;font-size:12.5px}
+  .foot{gap:12px;font-size:11px}
+  .legend{gap:10px}
+  .legend span{font-size:11px}
+}
+@media(max-width:430px){
+  .strip{grid-template-columns:1fr}
+  .hmark h1{font-size:24px}
+  .src{min-height:0}
+  .seg button{padding:7px 11px}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;transition-duration:.001ms !important}}
+</style>
+</head>
+<body>
+
+<div id="home">
+  <div class="hstrata"></div>
+  <div class="hin">
+    <div class="htop">
+      <div class="hmark">
+        <div class="g">V</div>
+        <div>
+          <h1 data-i18n="homeTitle">VAYU Mine Safety Console</h1>
+          <p data-i18n="tagline">MEGAHERTZ ROBOTICS · LPWAN TELEMETRY &amp; STRATA PREDICTION</p>
+        </div>
+      </div>
+      <div class="lang">
+        <span class="ml" id="langLbl" data-i18n="language">Language</span>
+        <div class="seg" role="group" aria-labelledby="langLbl">
+          <button type="button" data-lang="en" lang="en" aria-pressed="true">English</button>
+          <button type="button" data-lang="hi" lang="hi" aria-pressed="false">हिन्दी</button>
+          <button type="button" data-lang="or" lang="or" aria-pressed="false">ଓଡ଼ିଆ</button>
+        </div>
+      </div>
+    </div>
+    <p class="hlede" data-i18n-html="lede">Continuous gas, climate and ground-motion telemetry across the working panel — with a <b>strata forecast</b> that projects present conditions forward before a limit is reached. Choose a data source to begin.</p>
+    <div class="srcs">
+      <div class="src src--sim" id="cardSim">
+        <span class="stag" data-i18n="demo">Demonstration</span>
+        <h2 data-i18n="simPanel">Simulated panel</h2>
+        <p data-i18n="simDesc">A modelled bord-and-pillar panel with six nodes and drifting gas and ground-motion behaviour. Use for demos, training, and seeing how the forecast responds.</p>
+        <ul><li data-i18n="simB1">No hardware required</li><li data-i18n="simB2">Auditable hazard model</li><li data-i18n="simB3">Injectable fault scenario</li></ul>
+        <button type="button" class="sgo" id="btnSim" data-i18n="simGo">Open simulated panel →</button>
+      </div>
+      <div class="src src--live" id="cardLive">
+        <span class="stag" data-i18n="field">Field</span>
+        <h2 data-i18n="liveGw">Live gateway</h2>
+        <p data-i18n="liveDesc">Connect to a VAYU gateway on the mine network. Nodes appear as they report in; panels stay empty until real telemetry arrives.</p>
+        <div class="gw">
+          <div class="seg conn" role="group" aria-label="Connection">
+            <button type="button" data-conn="net" aria-pressed="true" data-i18n="connNet">Network</button>
+            <button type="button" data-conn="usb" aria-pressed="false" data-i18n="serTitle">USB serial</button>
+          </div>
+          <div id="connNet">
+            <input id="gwUrl" type="text" value="http://192.168.1.50/api/telemetry" spellcheck="false" aria-label="Gateway endpoint">
+          </div>
+          <div id="connUsb" hidden>
+            <label class="ml" for="baudSel" data-i18n="baud">Baud rate</label>
+            <select id="baudSel">
+              <option>9600</option><option>19200</option><option>38400</option><option>57600</option>
+              <option selected>115200</option><option>230400</option><option>460800</option>
+            </select>
+          </div>
+        </div>
+        <div class="snote" id="serNote" hidden></div>
+        <button type="button" class="sgo" id="btnLive" data-i18n="liveGo">Connect to gateway →</button>
+      </div>
+    </div>
+    <p class="hfoot" data-i18n-html="homeFoot">Readings are advisory. Statutory gas testing and record-keeping remain the duty of the appointed competent person.<br>Logs are formatted against CMR 2017 Reg. 169 continuous-monitoring requirements.</p>
+  </div>
+</div>
+
+<div id="app">
+  <header class="bar">
+    <div class="bmark"><div class="g">V</div><div><strong>VAYU</strong><span data-i18n="appSub">MINE SAFETY CONSOLE</span></div></div>
+    <div class="vsep"></div>
+    <select class="zn" id="zoneSel" aria-label="Working panel">
+      <option data-i18n="zone0">Panel 3B · Development district</option>
+      <option data-i18n="zone1">Panel 2A · Goaf edge district</option>
+      <option data-i18n="zone2">Panel 4C · Belt roadway district</option>
+    </select>
+    <div class="chip" id="modeChip" data-t="sim"><span class="led"></span><span id="modeTxt" data-i18n="simulated">Simulated</span></div>
+    <div class="chip" id="riskChip"><span class="led"></span><span id="riskTxt" data-i18n="assessing">Assessing</span></div>
+    <div class="grow"></div>
+    <button class="btn" id="btnScn" data-i18n="inject">Inject scenario</button>
+    <button class="btn" id="btnPort" hidden>Disconnect</button>
+    <button class="btn" id="btnHome" data-i18n="changeSrc">Change source</button>
+    <button class="tsw" id="themeBtn" aria-label="Toggle light and dark theme"><b id="themeIcon">☾</b></button>
+  </header>
+
+  <div class="main">
+    <div class="col">
+      <section class="card mine">
+        <div class="chd">
+          <h3 data-i18n="planTitle">Panel plan · node coverage</h3>
+          <span class="ml" id="mineRt">—</span>
+        </div>
+        <div class="cbd tight">
+          <canvas id="mineCv" aria-label="Panel plan"></canvas>
+          <div class="mtip" id="mineTip" role="tooltip"></div>
+          <div class="legend">
+            <span class="ml lg-g" data-i18n="lgStatus">Node status</span>
+            <span><i style="background:var(--mint)"></i><span data-i18n="c_stable">Stable</span></span>
+            <span><i style="background:var(--cyan)"></i><span data-i18n="c_watch">Watch</span></span>
+            <span><i style="background:var(--gold)"></i><span data-i18n="c_elevated">Elevated</span></span>
+            <span><i style="background:var(--coral)"></i><span data-i18n="c_action">Action</span></span>
+            <span class="lg-sep"></span>
+            <span><i class="sq" style="background:var(--rock2)"></i><span data-i18n="lgPillar">Coal pillar</span></span>
+            <span><i class="sq road"></i><span data-i18n="lgRoad">Roadway</span></span>
+            <span><i class="sq hatch"></i><span data-i18n="lgGoaf">Goaf</span></span>
+            <span><i class="ln"></i><span data-i18n="lgAir">Airflow</span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="chd"><h3 data-i18n="sensTitle">Sensor array</h3><span class="ml" id="sensRt">—</span></div>
+        <div class="cbd"><div class="strip" id="strip"></div></div>
+      </section>
+
+      <section class="card">
+        <div class="chd"><h3 data-i18n="motTitle">Wall motion · piezo &amp; gyro</h3><span class="ml" id="motRt">—</span></div>
+        <div class="cbd"><div class="mot">
+          <div class="mpane" id="pzPane">
+            <div class="mhd"><span class="ml" data-i18n="pzTitle">Piezo vibration · PPV</span><span class="mst" id="pzSt"></span></div>
+            <div class="mval"><b id="pzV">--</b><span class="u">mm/s</span><span class="mpk" id="pzPk"></span></div>
+            <canvas id="pzCv" height="104"></canvas>
+            <div class="mlim" data-i18n="l_vib">Watch ≥ 5 · action ≥ 8 mm/s</div>
+          </div>
+          <div class="mpane" id="gyPane">
+            <div class="mhd"><span class="ml" data-i18n="gyTitle">Gyro · wall tilt</span><span class="mst" id="gySt"></span></div>
+            <div class="gyro">
+              <canvas id="gyCv" width="128" height="128" aria-label="Wall tilt"></canvas>
+              <div class="gyr">
+                <div class="mval"><b id="tiltV">--</b><span class="u">°</span></div>
+                <div class="gsub" id="tiltXY">—</div>
+                <div class="axes"><div class="al2" data-i18n="rateLbl">Angular rate</div><div id="gyAx"></div></div>
+              </div>
+            </div>
+            <div class="mlim" data-i18n="l_tilt">Watch ≥ 0.5° · action ≥ 1°</div>
+          </div>
+        </div></div>
+      </section>
+
+      <section class="card">
+        <div class="chd">
+          <h3 data-i18n="trendTitle">Ground motion &amp; gas · 60 min</h3>
+          <div class="legend">
+            <span><i style="background:var(--cyan)"></i><span data-i18n="s_vib">Vibration</span></span>
+            <span><i style="background:var(--gold)"></i>CH₄</span>
+            <span><i style="background:var(--coral)"></i>CO</span>
+          </div>
+        </div>
+        <div class="cbd tight"><canvas id="trendCv" height="140"></canvas></div>
+      </section>
+
+      <section class="card mon" id="monCard" hidden>
+        <div class="chd"><h3 data-i18n="monTitle">Serial monitor</h3><span class="ml" id="monRt">—</span></div>
+        <div class="cbd">
+          <pre id="monPre"></pre>
+          <div class="hint"><span data-i18n="monFmt">Expected format</span>: <code>{"node":"N-101","ch4":0.42,"co":12,"prs":1042.3,"vib":1.9,"gx":0.02,"gy":-0.01,"gz":0.00,"tx":0.12,"ty":-0.05}</code></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card hero">
+        <div class="chd"><h3 data-i18n="fcTitle">Strata forecast</h3><span class="ml" id="hzRt">—</span></div>
+        <div class="hero-bd">
+          <div class="hrow">
+            <div class="hidx" id="hIdx">—</div>
+            <div class="hmeta">
+              <div class="hcls" id="hCls">—</div>
+              <div class="hsc" id="hSub" data-i18n="awaiting">Awaiting telemetry.</div>
+            </div>
+          </div>
+          <div class="hgauge"><div class="f" id="hFill"></div><div class="m" style="left:52%"></div><div class="m" style="left:74%"></div></div>
+          <div class="hband"><span data-i18n="bandStable">0 stable</span><span data-i18n="bandElev">52 elevated</span><span>100</span></div>
+        </div>
+        <div class="fcs" id="fcs"></div>
+        <div class="drv">
+          <div class="hd"><span class="ml" data-i18n="drvTitle">Driving the forecast</span></div>
+          <p id="drvNote" data-i18n="drvNote">Share of the projected index contributed by each present reading.</p>
+          <div id="drvList"></div>
+        </div>
+      </section>
+
+      <section class="card" style="flex:1 1 auto;min-height:230px">
+        <div class="chd"><h3 data-i18n="alTitle">Alert log</h3><span class="ml" id="alRt">—</span></div>
+        <div class="alw" id="alList"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span><span data-i18n="fSource">SOURCE</span> <b id="fSrc">—</b></span>
+    <span><span data-i18n="fNodes">NODES</span> <b id="fNodes">—</b></span>
+    <span><span data-i18n="fSync">LAST SYNC</span> <b id="fSync">—</b></span>
+    <span><span data-i18n="fModel">MODEL</span> <b>strata-tinyml v0.4</b></span>
+    <span><span data-i18n="fSession">SESSION</span> <b id="fUp">00:00:00</b></span>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= LANGUAGE ======================= */
+var T={
+en:{
+  pageTitle:'VAYU · Mine Safety Console',
+  homeTitle:'VAYU Mine Safety Console',
+  tagline:'MEGAHERTZ ROBOTICS · LPWAN TELEMETRY & STRATA PREDICTION',
+  language:'Language',
+  lede:'Continuous gas, climate and ground-motion telemetry across the working panel — with a <b>strata forecast</b> that projects present conditions forward before a limit is reached. Choose a data source to begin.',
+  demo:'Demonstration', simPanel:'Simulated panel',
+  simDesc:'A modelled bord-and-pillar panel with six nodes and drifting gas and ground-motion behaviour. Use for demos, training, and seeing how the forecast responds.',
+  simB1:'No hardware required', simB2:'Auditable hazard model', simB3:'Injectable fault scenario',
+  simGo:'Open simulated panel →',
+  field:'Field', liveGw:'Live gateway',
+  liveDesc:'Connect to a VAYU gateway on the mine network, or read the receiver plugged into this computer over USB. Nodes appear as they report in; panels stay empty until real telemetry arrives.',
+  liveGo:'Connect to gateway →',
+  homeFoot:'Readings are advisory. Statutory gas testing and record-keeping remain the duty of the appointed competent person.<br>Logs are formatted against CMR 2017 Reg. 169 continuous-monitoring requirements.',
+  appSub:'MINE SAFETY CONSOLE',
+  zone0:'Panel 3B · Development district', zone1:'Panel 2A · Goaf edge district', zone2:'Panel 4C · Belt roadway district',
+  simulated:'Simulated', assessing:'Assessing', inject:'Inject scenario', changeSrc:'Change source',
+  planTitle:'Panel plan · node coverage',
+  lgStatus:'Node status', lgPillar:'Coal pillar', lgRoad:'Roadway', lgGoaf:'Goaf', lgAir:'Airflow',
+  cvIntake:'INTAKE', cvScale:'30 m', ttSig:'Signal', ttAgo:'last report {s} s ago',
+  sensTitle:'Sensor array', trendTitle:'Ground motion & gas · 60 min',
+  fcTitle:'Strata forecast', awaiting:'Awaiting telemetry.', awaitingGw:'Awaiting telemetry from the gateway.',
+  bandStable:'0 stable', bandElev:'52 elevated',
+  drvTitle:'Driving the forecast', drvNote:'Share of the projected index contributed by each present reading.',
+  alTitle:'Alert log',
+  fSource:'SOURCE', fNodes:'NODES', fSync:'LAST SYNC', fModel:'MODEL', fSession:'SESSION',
+  chLive:'8 channels live', offline:'offline', never:'never', gateway:'Gateway',
+  c_stable:'Stable', c_watch:'Watch', c_elevated:'Elevated', c_action:'Action', c_info:'Info',
+  breachA:'Limit breached on {n}.', breachB:'Index held at Action until the reading clears.',
+  trUp:'Trending toward instability over the next six hours.',
+  trDown:'Conditions are easing on the current trend.',
+  trFlat:'Holding steady on the current trend.',
+  hr:'hr', hrs:'hrs', updated:'updated {t}',
+  mineRt:'{n} nodes · {e} elevated',
+  noAlTitle:'No alerts', noAlBody:'Alerts appear once telemetry arrives.',
+  clearTitle:'All clear', clearBody:'No threshold events this session.',
+  events:'{n} events',
+  cvFace:'ADVANCING FACE', cvGoaf:'GOAF', cvReturn:'RETURN',
+  cvNoNode:'No node data — awaiting telemetry', cvNoTrend:'No trend data', cvAgo:'−60 min', cvNow:'now',
+  s_ch4:'CH₄', s_co:'CO', s_co2:'CO₂', s_o2:'O₂', s_tmp:'Temperature', s_rh:'Humidity', s_vel:'Air velocity', s_vib:'Piezo vibration', s_prs:'Air pressure', s_tilt:'Wall tilt', s_gyr:'Gyro rate', s_dprs:'Barometric trend',
+  l_ch4:'Stop work ≥ 1.25%', l_co:'TLV 50 ppm', l_co2:'Limit 1.4%', l_o2:'Minimum 19%',
+  l_tmp:'Wet-bulb 33.5 °C', l_rh:'Ventilation guide', l_vel:'Minimum 0.3 m/s', l_vib:'Watch ≥ 5 · action ≥ 8 mm/s', l_tilt:'Watch ≥ 0.5° · action ≥ 1°',
+  d_vib:'Piezo vibration (PPV)', d_tilt:'Wall tilt (gyro)', d_dprs:'Barometric fall', d_vibTr:'Motion trend', d_ch4:'Methane load', d_tmp:'Strata temperature', d_co:'CO / heating signal', d_rh:'Humidity',
+  'loc_N-101':'Development face', 'loc_N-102':'Face crosscut 4', 'loc_N-103':'Return airway',
+  'loc_N-104':'Goaf edge seal', 'loc_N-105':'Intake junction', 'loc_N-106':'Belt roadway',
+  aBad:'{s} at {v} {u} — withdraw and ventilate.', aWarn:'{s} rising: {v} {u}.', aWarnLow:'{s} falling: {v} {u}.', aWarnBaro:'{s}: pressure falling at {v} {u}.',
+  aBadWall:'{s} at {v} {u} — withdraw and inspect roof and rib support.',
+  aBadBaro:'{s} {v} {u} — falling pressure draws gas out of the goaf; increase gas checks at the seals.',
+  motTitle:'Wall motion · piezo & gyro', pzTitle:'Piezo vibration · PPV', gyTitle:'Gyro · wall tilt',
+  peak:'peak {v}', tiltXY:'X {x}° · Y {y}° from baseline', rateLbl:'Angular rate', motLive:'wall sensors live', noData:'No data', aOk:'{s} returned within limits.',
+  aFc74:'Forecast projects instability within 6 h — review support and monitoring plan.',
+  aFc52:'Instability index trending upward on the 6-hour horizon.',
+  aSim:'Simulated panel started — six nodes reporting.',
+  aScn:'Scenario injected — rising methane and ground motion at the face.',
+  aZone:'Switched to {z}.',
+  connNet:'Network', serTitle:'USB serial',
+  baud:'Baud rate', serGo:'Choose serial port →',
+  serNo:'Needs Chrome, Edge or Opera on a desktop computer.',
+  serSecure:'Open this page over HTTPS to use USB serial.',
+  serialMode:'Live · USB', serWaiting:'Waiting for data', serLive:'Receiving', serLost:'Disconnected', serOpening:'Opening port',
+  disconnect:'Disconnect', reconnect:'Reconnect',
+  awaitingSer:'Port open — waiting for the first reading from the receiver.',
+  chLiveN:'{n} channels live',
+  monTitle:'Serial monitor', monFmt:'Expected format',
+  monStat:'{n} lines · {b} unreadable',
+  monEmpty:'Nothing received yet. Check that the baud rate matches the receiver firmware.',
+  aSerOpen:'USB serial connected at {b} baud.',
+  aSerFirst:'First reading received from the receiver.',
+  aSerLost:'Receiver disconnected — check the USB cable.',
+  aSerErr:'Could not open the port ({m}). Close any other app using it, such as Arduino IDE or PuTTY, and try again.',
+  aSerStale:'No data for {s} s — the receiver may have stopped sending.',
+  aNodeNew:'{id} reporting.'
+},
+hi:{
+  pageTitle:'VAYU · खान सुरक्षा कंसोल',
+  homeTitle:'VAYU खान सुरक्षा कंसोल',
+  tagline:'मेगाहर्ट्ज़ रोबोटिक्स · LPWAN टेलीमेट्री और स्ट्राटा पूर्वानुमान',
+  language:'भाषा',
+  lede:'पूरे कार्यरत पैनल में गैस, जलवायु और भू-कंपन की निरंतर टेलीमेट्री — साथ में एक <b>स्ट्राटा पूर्वानुमान</b>, जो सीमा पार होने से पहले मौजूदा स्थितियों को आगे प्रक्षेपित करता है। शुरू करने के लिए डेटा स्रोत चुनें।',
+  demo:'प्रदर्शन', simPanel:'सिम्युलेटेड पैनल',
+  simDesc:'छह नोड और बदलते गैस व भू-कंपन व्यवहार वाला एक मॉडल किया गया बोर्ड-एंड-पिलर पैनल। डेमो, प्रशिक्षण और पूर्वानुमान की प्रतिक्रिया देखने के लिए उपयोग करें।',
+  simB1:'किसी हार्डवेयर की आवश्यकता नहीं', simB2:'जाँच योग्य जोखिम मॉडल', simB3:'फ़ॉल्ट परिदृश्य डालने की सुविधा',
+  simGo:'सिम्युलेटेड पैनल खोलें →',
+  field:'फ़ील्ड', liveGw:'लाइव गेटवे',
+  liveDesc:'खान नेटवर्क पर VAYU गेटवे से जुड़ें, या इस कंप्यूटर में USB से जुड़े रिसीवर को पढ़ें। नोड रिपोर्ट करते ही दिखाई देंगे; वास्तविक टेलीमेट्री आने तक पैनल खाली रहेंगे।',
+  liveGo:'गेटवे से जुड़ें →',
+  homeFoot:'रीडिंग केवल सलाह के लिए हैं। वैधानिक गैस परीक्षण और रिकॉर्ड रखना नियुक्त सक्षम व्यक्ति का दायित्व बना रहता है।<br>लॉग CMR 2017 विनियम 169 की निरंतर-निगरानी आवश्यकताओं के अनुसार तैयार किए जाते हैं।',
+  appSub:'खान सुरक्षा कंसोल',
+  zone0:'पैनल 3B · डेवलपमेंट डिस्ट्रिक्ट', zone1:'पैनल 2A · गोफ़ किनारा डिस्ट्रिक्ट', zone2:'पैनल 4C · बेल्ट रोडवे डिस्ट्रिक्ट',
+  simulated:'सिम्युलेटेड', assessing:'आकलन जारी', inject:'परिदृश्य डालें', changeSrc:'स्रोत बदलें',
+  planTitle:'पैनल नक्शा · नोड कवरेज',
+  lgStatus:'नोड स्थिति', lgPillar:'कोयला स्तंभ', lgRoad:'रोडवे', lgGoaf:'गोफ़', lgAir:'वायु प्रवाह',
+  cvIntake:'इनटेक', cvScale:'30 मी', ttSig:'सिग्नल', ttAgo:'अंतिम रिपोर्ट {s} सेकंड पहले',
+  sensTitle:'सेंसर समूह', trendTitle:'भू-कंपन और गैस · 60 मिनट',
+  fcTitle:'स्ट्राटा पूर्वानुमान', awaiting:'टेलीमेट्री की प्रतीक्षा है।', awaitingGw:'गेटवे से टेलीमेट्री की प्रतीक्षा है।',
+  bandStable:'0 स्थिर', bandElev:'52 बढ़ा हुआ',
+  drvTitle:'पूर्वानुमान के कारक', drvNote:'प्रक्षेपित सूचकांक में प्रत्येक मौजूदा रीडिंग का योगदान।',
+  alTitle:'अलर्ट लॉग',
+  fSource:'स्रोत', fNodes:'नोड', fSync:'अंतिम सिंक', fModel:'मॉडल', fSession:'सत्र',
+  chLive:'8 चैनल लाइव', offline:'ऑफ़लाइन', never:'कभी नहीं', gateway:'गेटवे',
+  c_stable:'स्थिर', c_watch:'निगरानी', c_elevated:'बढ़ा हुआ', c_action:'कार्रवाई', c_info:'सूचना',
+  breachA:'{n} पर सीमा पार।', breachB:'रीडिंग सामान्य होने तक सूचकांक "कार्रवाई" स्तर पर रखा गया है।',
+  trUp:'अगले छह घंटों में अस्थिरता की ओर रुझान।',
+  trDown:'मौजूदा रुझान पर स्थितियाँ सुधर रही हैं।',
+  trFlat:'मौजूदा रुझान पर स्थिर।',
+  hr:'घंटा', hrs:'घंटे', updated:'अद्यतन {t}',
+  mineRt:'{n} नोड · {e} बढ़े हुए',
+  noAlTitle:'कोई अलर्ट नहीं', noAlBody:'टेलीमेट्री आने पर अलर्ट दिखाई देंगे।',
+  clearTitle:'सब सामान्य', clearBody:'इस सत्र में कोई सीमा घटना नहीं।',
+  events:'{n} घटनाएँ',
+  cvFace:'आगे बढ़ता फेस', cvGoaf:'गोफ़', cvReturn:'रिटर्न',
+  cvNoNode:'नोड डेटा नहीं — टेलीमेट्री की प्रतीक्षा', cvNoTrend:'रुझान डेटा नहीं', cvAgo:'−60 मिनट', cvNow:'अभी',
+  s_tmp:'तापमान', s_rh:'आर्द्रता', s_vel:'वायु वेग', s_vib:'पीज़ो कंपन', s_prs:'वायु दाब', s_tilt:'दीवार झुकाव', s_gyr:'जाइरो दर', s_dprs:'दाब रुझान',
+  l_ch4:'कार्य रोकें ≥ 1.25%', l_co2:'सीमा 1.4%', l_o2:'न्यूनतम 19%',
+  l_tmp:'वेट-बल्ब 33.5 °C', l_rh:'वेंटिलेशन मार्गदर्शिका', l_vel:'न्यूनतम 0.3 m/s', l_vib:'निगरानी ≥ 5 · कार्रवाई ≥ 8 mm/s', l_tilt:'निगरानी ≥ 0.5° · कार्रवाई ≥ 1°',
+  d_vib:'पीज़ो कंपन (PPV)', d_tilt:'दीवार झुकाव (जाइरो)', d_dprs:'वायुदाब में गिरावट', d_vibTr:'कंपन रुझान', d_ch4:'मीथेन भार', d_tmp:'स्ट्राटा तापमान', d_co:'CO / तापन संकेत', d_rh:'आर्द्रता',
+  'loc_N-101':'डेवलपमेंट फेस', 'loc_N-102':'फेस क्रॉसकट 4', 'loc_N-103':'रिटर्न वायुमार्ग',
+  'loc_N-104':'गोफ़ किनारा सील', 'loc_N-105':'इनटेक जंक्शन', 'loc_N-106':'बेल्ट रोडवे',
+  aBad:'{s} {v} {u} पर — कर्मियों को हटाएँ और वेंटिलेशन करें।', aWarn:'{s} बढ़ रहा है: {v} {u}।', aWarnLow:'{s} घट रहा है: {v} {u}।', aWarnBaro:'{s}: दाब {v} {u} की दर से गिर रहा है।',
+  aBadWall:'{s} {v} {u} पर — कर्मियों को हटाएँ और छत व रिब सपोर्ट की जाँच करें।',
+  aBadBaro:'{s} {v} {u} — गिरता दाब गोफ़ से गैस खींचता है; सील पर गैस जाँच बढ़ाएँ।',
+  motTitle:'दीवार गति · पीज़ो और जाइरो', pzTitle:'पीज़ो कंपन · PPV', gyTitle:'जाइरो · दीवार झुकाव',
+  peak:'शिखर {v}', tiltXY:'आधार से X {x}° · Y {y}°', rateLbl:'कोणीय दर', motLive:'दीवार सेंसर लाइव', noData:'डेटा नहीं', aOk:'{s} सीमा के भीतर लौट आया।',
+  aFc74:'पूर्वानुमान 6 घंटे में अस्थिरता दिखा रहा है — सपोर्ट और निगरानी योजना की समीक्षा करें।',
+  aFc52:'6 घंटे की अवधि में अस्थिरता सूचकांक बढ़ रहा है।',
+  aSim:'सिम्युलेटेड पैनल शुरू — छह नोड रिपोर्ट कर रहे हैं।',
+  aScn:'परिदृश्य डाला गया — फेस पर मीथेन और भू-कंपन बढ़ रहे हैं।',
+  aZone:'{z} पर स्विच किया गया।',
+  connNet:'नेटवर्क', serTitle:'USB सीरियल',
+  baud:'बॉड रेट', serGo:'सीरियल पोर्ट चुनें →',
+  serNo:'डेस्कटॉप कंप्यूटर पर Chrome, Edge या Opera आवश्यक है।',
+  serSecure:'USB सीरियल के लिए यह पेज HTTPS पर खोलें।',
+  serialMode:'लाइव · USB', serWaiting:'डेटा की प्रतीक्षा', serLive:'डेटा आ रहा है', serLost:'डिस्कनेक्ट', serOpening:'पोर्ट खुल रहा है',
+  disconnect:'डिस्कनेक्ट करें', reconnect:'फिर से जोड़ें',
+  awaitingSer:'पोर्ट खुला है — रिसीवर की पहली रीडिंग की प्रतीक्षा है।',
+  chLiveN:'{n} चैनल लाइव',
+  monTitle:'सीरियल मॉनिटर', monFmt:'अपेक्षित प्रारूप',
+  monStat:'{n} पंक्तियाँ · {b} अपठनीय',
+  monEmpty:'अभी तक कुछ प्राप्त नहीं हुआ। जाँचें कि बॉड रेट रिसीवर फ़र्मवेयर से मेल खाता है।',
+  aSerOpen:'USB सीरियल {b} बॉड पर जुड़ा।',
+  aSerFirst:'रिसीवर से पहली रीडिंग प्राप्त हुई।',
+  aSerLost:'रिसीवर डिस्कनेक्ट हुआ — USB केबल जाँचें।',
+  aSerErr:'पोर्ट नहीं खुल सका ({m})। इसे उपयोग कर रहा कोई अन्य ऐप, जैसे Arduino IDE या PuTTY, बंद करें और फिर प्रयास करें।',
+  aSerStale:'{s} सेकंड से कोई डेटा नहीं — रिसीवर ने भेजना बंद कर दिया हो सकता है।',
+  aNodeNew:'{id} रिपोर्ट कर रहा है।'
+},
+or:{
+  pageTitle:'VAYU · ଖଣି ସୁରକ୍ଷା କନସୋଲ',
+  homeTitle:'VAYU ଖଣି ସୁରକ୍ଷା କନସୋଲ',
+  tagline:'ମେଗାହର୍ଜ ରୋବୋଟିକ୍ସ · LPWAN ଟେଲିମେଟ୍ରି ଓ ଷ୍ଟ୍ରାଟା ପୂର୍ବାନୁମାନ',
+  language:'ଭାଷା',
+  lede:'ସମଗ୍ର କାର୍ଯ୍ୟରତ ପ୍ୟାନେଲରେ ଗ୍ୟାସ, ଜଳବାୟୁ ଓ ଭୂ-କମ୍ପନର ନିରନ୍ତର ଟେଲିମେଟ୍ରି — ସହିତ ଏକ <b>ଷ୍ଟ୍ରାଟା ପୂର୍ବାନୁମାନ</b>, ଯାହା ସୀମା ଅତିକ୍ରମ ହେବା ପୂର୍ବରୁ ବର୍ତ୍ତମାନର ଅବସ୍ଥାକୁ ଆଗକୁ ପ୍ରକ୍ଷେପ କରେ। ଆରମ୍ଭ କରିବାକୁ ଏକ ଡାଟା ଉତ୍ସ ବାଛନ୍ତୁ।',
+  demo:'ପ୍ରଦର୍ଶନ', simPanel:'ସିମୁଲେଟେଡ୍ ପ୍ୟାନେଲ',
+  simDesc:'ଛଅଟି ନୋଡ୍ ଏବଂ ପରିବର୍ତ୍ତନଶୀଳ ଗ୍ୟାସ ଓ ଭୂ-କମ୍ପନ ଆଚରଣ ସହ ଏକ ମଡେଲ କରାଯାଇଥିବା ବୋର୍ଡ-ଆଣ୍ଡ-ପିଲର ପ୍ୟାନେଲ। ଡେମୋ, ପ୍ରଶିକ୍ଷଣ ଏବଂ ପୂର୍ବାନୁମାନ କିପରି ପ୍ରତିକ୍ରିୟା ଦିଏ ଦେଖିବା ପାଇଁ ବ୍ୟବହାର କରନ୍ତୁ।',
+  simB1:'କୌଣସି ହାର୍ଡୱେର ଆବଶ୍ୟକ ନାହିଁ', simB2:'ଯାଞ୍ଚଯୋଗ୍ୟ ବିପଦ ମଡେଲ', simB3:'ତ୍ରୁଟି ପରିସ୍ଥିତି ପ୍ରୟୋଗ ସୁବିଧା',
+  simGo:'ସିମୁଲେଟେଡ୍ ପ୍ୟାନେଲ ଖୋଲନ୍ତୁ →',
+  field:'ଫିଲ୍ଡ', liveGw:'ଲାଇଭ୍ ଗେଟୱେ',
+  liveDesc:'ଖଣି ନେଟୱର୍କରେ ଥିବା VAYU ଗେଟୱେ ସହ ସଂଯୋଗ କରନ୍ତୁ, କିମ୍ବା ଏହି କମ୍ପ୍ୟୁଟରରେ USB ଦ୍ୱାରା ସଂଯୁକ୍ତ ରିସିଭରକୁ ପଢ଼ନ୍ତୁ। ନୋଡ୍ ରିପୋର୍ଟ କଲା ମାତ୍ରେ ଦେଖାଯିବ; ପ୍ରକୃତ ଟେଲିମେଟ୍ରି ଆସିବା ପର୍ଯ୍ୟନ୍ତ ପ୍ୟାନେଲ ଖାଲି ରହିବ।',
+  liveGo:'ଗେଟୱେ ସହ ସଂଯୋଗ କରନ୍ତୁ →',
+  homeFoot:'ରିଡିଂଗୁଡ଼ିକ କେବଳ ପରାମର୍ଶମୂଳକ। ବିଧିବଦ୍ଧ ଗ୍ୟାସ ପରୀକ୍ଷା ଓ ରେକର୍ଡ ରଖିବା ନିଯୁକ୍ତ ଦକ୍ଷ ବ୍ୟକ୍ତିଙ୍କ ଦାୟିତ୍ୱ ହୋଇ ରହିଥାଏ।<br>ଲଗ୍ CMR 2017 ନିୟମ 169 ର ନିରନ୍ତର-ନିରୀକ୍ଷଣ ଆବଶ୍ୟକତା ଅନୁଯାୟୀ ପ୍ରସ୍ତୁତ କରାଯାଏ।',
+  appSub:'ଖଣି ସୁରକ୍ଷା କନସୋଲ',
+  zone0:'ପ୍ୟାନେଲ 3B · ଡେଭଲପମେଣ୍ଟ ଡିଷ୍ଟ୍ରିକ୍ଟ', zone1:'ପ୍ୟାନେଲ 2A · ଗୋଫ୍ ଧାର ଡିଷ୍ଟ୍ରିକ୍ଟ', zone2:'ପ୍ୟାନେଲ 4C · ବେଲ୍ଟ ରୋଡୱେ ଡିଷ୍ଟ୍ରିକ୍ଟ',
+  simulated:'ସିମୁଲେଟେଡ୍', assessing:'ମୂଲ୍ୟାୟନ ଚାଲିଛି', inject:'ପରିସ୍ଥିତି ପ୍ରୟୋଗ କରନ୍ତୁ', changeSrc:'ଉତ୍ସ ବଦଳାନ୍ତୁ',
+  planTitle:'ପ୍ୟାନେଲ ନକ୍ସା · ନୋଡ୍ କଭରେଜ',
+  lgStatus:'ନୋଡ୍ ସ୍ଥିତି', lgPillar:'କୋଇଲା ସ୍ତମ୍ଭ', lgRoad:'ରୋଡୱେ', lgGoaf:'ଗୋଫ୍', lgAir:'ବାୟୁ ପ୍ରବାହ',
+  cvIntake:'ଇନଟେକ୍', cvScale:'30 ମି', ttSig:'ସିଗନାଲ୍', ttAgo:'ଶେଷ ରିପୋର୍ଟ {s} ସେକେଣ୍ଡ ପୂର୍ବରୁ',
+  sensTitle:'ସେନ୍ସର ସମୂହ', trendTitle:'ଭୂ-କମ୍ପନ ଓ ଗ୍ୟାସ · 60 ମିନିଟ୍',
+  fcTitle:'ଷ୍ଟ୍ରାଟା ପୂର୍ବାନୁମାନ', awaiting:'ଟେଲିମେଟ୍ରି ଅପେକ୍ଷାରେ।', awaitingGw:'ଗେଟୱେରୁ ଟେଲିମେଟ୍ରି ଅପେକ୍ଷାରେ।',
+  bandStable:'0 ସ୍ଥିର', bandElev:'52 ବର୍ଦ୍ଧିତ',
+  drvTitle:'ପୂର୍ବାନୁମାନର କାରକ', drvNote:'ପ୍ରକ୍ଷେପିତ ସୂଚକାଙ୍କରେ ପ୍ରତ୍ୟେକ ବର୍ତ୍ତମାନ ରିଡିଂର ଅବଦାନ।',
+  alTitle:'ସତର୍କତା ଲଗ୍',
+  fSource:'ଉତ୍ସ', fNodes:'ନୋଡ୍', fSync:'ଶେଷ ସିଙ୍କ', fModel:'ମଡେଲ', fSession:'ସେସନ୍',
+  chLive:'8 ଚ୍ୟାନେଲ ଲାଇଭ୍', offline:'ଅଫଲାଇନ୍', never:'କେବେ ନୁହେଁ', gateway:'ଗେଟୱେ',
+  c_stable:'ସ୍ଥିର', c_watch:'ନଜର', c_elevated:'ବର୍ଦ୍ଧିତ', c_action:'ପଦକ୍ଷେପ', c_info:'ସୂଚନା',
+  breachA:'{n} ରେ ସୀମା ଅତିକ୍ରମ।', breachB:'ରିଡିଂ ସ୍ୱାଭାବିକ ନହେବା ପର୍ଯ୍ୟନ୍ତ ସୂଚକାଙ୍କ "ପଦକ୍ଷେପ" ସ୍ତରରେ ରଖାଯାଇଛି।',
+  trUp:'ଆଗାମୀ ଛଅ ଘଣ୍ଟାରେ ଅସ୍ଥିରତା ଆଡ଼କୁ ଧାରା।',
+  trDown:'ବର୍ତ୍ତମାନ ଧାରାରେ ଅବସ୍ଥା ଉନ୍ନତ ହେଉଛି।',
+  trFlat:'ବର୍ତ୍ତମାନ ଧାରାରେ ସ୍ଥିର।',
+  hr:'ଘଣ୍ଟା', hrs:'ଘଣ୍ଟା', updated:'ଅଦ୍ୟତନ {t}',
+  mineRt:'{n} ନୋଡ୍ · {e} ବର୍ଦ୍ଧିତ',
+  noAlTitle:'କୌଣସି ସତର୍କତା ନାହିଁ', noAlBody:'ଟେଲିମେଟ୍ରି ଆସିବା ପରେ ସତର୍କତା ଦେଖାଯିବ।',
+  clearTitle:'ସବୁ ସ୍ୱାଭାବିକ', clearBody:'ଏହି ସେସନରେ କୌଣସି ସୀମା ଘଟଣା ନାହିଁ।',
+  events:'{n} ଘଟଣା',
+  cvFace:'ଅଗ୍ରଗାମୀ ଫେସ୍', cvGoaf:'ଗୋଫ୍', cvReturn:'ରିଟର୍ନ',
+  cvNoNode:'ନୋଡ୍ ଡାଟା ନାହିଁ — ଟେଲିମେଟ୍ରି ଅପେକ୍ଷାରେ', cvNoTrend:'ଧାରା ଡାଟା ନାହିଁ', cvAgo:'−60 ମିନିଟ୍', cvNow:'ବର୍ତ୍ତମାନ',
+  s_tmp:'ତାପମାତ୍ରା', s_rh:'ଆର୍ଦ୍ରତା', s_vel:'ବାୟୁ ବେଗ', s_vib:'ପିଜୋ କମ୍ପନ', s_prs:'ବାୟୁ ଚାପ', s_tilt:'କାନ୍ଥ ଢାଳ', s_gyr:'ଜାଇରୋ ହାର', s_dprs:'ଚାପ ଧାରା',
+  l_ch4:'କାମ ବନ୍ଦ ≥ 1.25%', l_co2:'ସୀମା 1.4%', l_o2:'ସର୍ବନିମ୍ନ 19%',
+  l_tmp:'ୱେଟ-ବଲ୍ବ 33.5 °C', l_rh:'ଭେଣ୍ଟିଲେସନ ନିର୍ଦ୍ଦେଶିକା', l_vel:'ସର୍ବନିମ୍ନ 0.3 m/s', l_vib:'ନଜର ≥ 5 · ପଦକ୍ଷେପ ≥ 8 mm/s', l_tilt:'ନଜର ≥ 0.5° · ପଦକ୍ଷେପ ≥ 1°',
+  d_vib:'ପିଜୋ କମ୍ପନ (PPV)', d_tilt:'କାନ୍ଥ ଢାଳ (ଜାଇରୋ)', d_dprs:'ବାୟୁଚାପ ହ୍ରାସ', d_vibTr:'କମ୍ପନ ଧାରା', d_ch4:'ମିଥେନ ଭାର', d_tmp:'ଷ୍ଟ୍ରାଟା ତାପମାତ୍ରା', d_co:'CO / ଉତ୍ତାପ ସଙ୍କେତ', d_rh:'ଆର୍ଦ୍ରତା',
+  'loc_N-101':'ଡେଭଲପମେଣ୍ଟ ଫେସ୍', 'loc_N-102':'ଫେସ୍ କ୍ରସକଟ 4', 'loc_N-103':'ରିଟର୍ନ ଏୟାରୱେ',
+  'loc_N-104':'ଗୋଫ୍ ଧାର ସିଲ୍', 'loc_N-105':'ଇନଟେକ୍ ଜଙ୍କସନ', 'loc_N-106':'ବେଲ୍ଟ ରୋଡୱେ',
+  aBad:'{s} {v} {u} ରେ — କର୍ମୀଙ୍କୁ ବାହାର କରନ୍ତୁ ଓ ଭେଣ୍ଟିଲେଟ୍ କରନ୍ତୁ।', aWarn:'{s} ବଢ଼ୁଛି: {v} {u}।', aWarnLow:'{s} କମୁଛି: {v} {u}।', aWarnBaro:'{s}: ଚାପ {v} {u} ହାରରେ ହ୍ରାସ ପାଉଛି।',
+  aBadWall:'{s} {v} {u} ରେ — କର୍ମୀଙ୍କୁ ବାହାର କରନ୍ତୁ ଓ ଛାତ ଏବଂ ରିବ୍ ସପୋର୍ଟ ଯାଞ୍ଚ କରନ୍ତୁ।',
+  aBadBaro:'{s} {v} {u} — ହ୍ରାସ ପାଉଥିବା ଚାପ ଗୋଫ୍‌ରୁ ଗ୍ୟାସ ଟାଣେ; ସିଲ୍‌ରେ ଗ୍ୟାସ ଯାଞ୍ଚ ବଢ଼ାନ୍ତୁ।',
+  motTitle:'କାନ୍ଥ ଗତି · ପିଜୋ ଓ ଜାଇରୋ', pzTitle:'ପିଜୋ କମ୍ପନ · PPV', gyTitle:'ଜାଇରୋ · କାନ୍ଥ ଢାଳ',
+  peak:'ଶିଖର {v}', tiltXY:'ଆଧାରରୁ X {x}° · Y {y}°', rateLbl:'କୌଣିକ ହାର', motLive:'କାନ୍ଥ ସେନ୍ସର ଲାଇଭ୍', noData:'ଡାଟା ନାହିଁ', aOk:'{s} ସୀମା ମଧ୍ୟକୁ ଫେରିଛି।',
+  aFc74:'ପୂର୍ବାନୁମାନ 6 ଘଣ୍ଟା ମଧ୍ୟରେ ଅସ୍ଥିରତା ଦର୍ଶାଉଛି — ସପୋର୍ଟ ଓ ନିରୀକ୍ଷଣ ଯୋଜନା ସମୀକ୍ଷା କରନ୍ତୁ।',
+  aFc52:'6 ଘଣ୍ଟା ଅବଧିରେ ଅସ୍ଥିରତା ସୂଚକାଙ୍କ ବଢ଼ୁଛି।',
+  aSim:'ସିମୁଲେଟେଡ୍ ପ୍ୟାନେଲ ଆରମ୍ଭ — ଛଅଟି ନୋଡ୍ ରିପୋର୍ଟ କରୁଛି।',
+  aScn:'ପରିସ୍ଥିତି ପ୍ରୟୋଗ — ଫେସରେ ମିଥେନ ଓ ଭୂ-କମ୍ପନ ବଢ଼ୁଛି।',
+  aZone:'{z} କୁ ବଦଳାଗଲା।',
+  connNet:'ନେଟୱର୍କ', serTitle:'USB ସିରିଆଲ୍',
+  baud:'ବଡ୍ ରେଟ୍', serGo:'ସିରିଆଲ୍ ପୋର୍ଟ ବାଛନ୍ତୁ →',
+  serNo:'ଡେସ୍କଟପ୍ କମ୍ପ୍ୟୁଟରରେ Chrome, Edge ବା Opera ଆବଶ୍ୟକ।',
+  serSecure:'USB ସିରିଆଲ୍ ପାଇଁ ଏହି ପୃଷ୍ଠାକୁ HTTPS ରେ ଖୋଲନ୍ତୁ।',
+  serialMode:'ଲାଇଭ୍ · USB', serWaiting:'ଡାଟା ଅପେକ୍ଷାରେ', serLive:'ଡାଟା ଆସୁଛି', serLost:'ବିଚ୍ଛିନ୍ନ', serOpening:'ପୋର୍ଟ ଖୋଲୁଛି',
+  disconnect:'ବିଚ୍ଛିନ୍ନ କରନ୍ତୁ', reconnect:'ପୁନଃ ସଂଯୋଗ କରନ୍ତୁ',
+  awaitingSer:'ପୋର୍ଟ ଖୋଲା — ରିସିଭରରୁ ପ୍ରଥମ ରିଡିଂ ଅପେକ୍ଷାରେ।',
+  chLiveN:'{n} ଚ୍ୟାନେଲ ଲାଇଭ୍',
+  monTitle:'ସିରିଆଲ୍ ମନିଟର', monFmt:'ଆଶା କରାଯାଉଥିବା ଫର୍ମାଟ୍',
+  monStat:'{n} ଧାଡ଼ି · {b} ଅପଠନୀୟ',
+  monEmpty:'ଏପର୍ଯ୍ୟନ୍ତ କିଛି ମିଳିନାହିଁ। ବଡ୍ ରେଟ୍ ରିସିଭର ଫର୍ମୱେୟାର ସହ ମେଳ ଖାଉଛି କି ନାହିଁ ଯାଞ୍ଚ କରନ୍ତୁ।',
+  aSerOpen:'USB ସିରିଆଲ୍ {b} ବଡ୍‌ରେ ସଂଯୁକ୍ତ।',
+  aSerFirst:'ରିସିଭରରୁ ପ୍ରଥମ ରିଡିଂ ମିଳିଲା।',
+  aSerLost:'ରିସିଭର ବିଚ୍ଛିନ୍ନ — USB କେବଲ୍ ଯାଞ୍ଚ କରନ୍ତୁ।',
+  aSerErr:'ପୋର୍ଟ ଖୋଲିପାରିଲା ନାହିଁ ({m})। ଏହାକୁ ବ୍ୟବହାର କରୁଥିବା Arduino IDE ବା PuTTY ଭଳି ଅନ୍ୟ ଆପ୍ ବନ୍ଦ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
+  aSerStale:'{s} ସେକେଣ୍ଡ ଧରି କୌଣସି ଡାଟା ନାହିଁ — ରିସିଭର ପଠାଇବା ବନ୍ଦ କରିଥାଇପାରେ।',
+  aNodeNew:'{id} ରିପୋର୍ଟ କରୁଛି।'
+}};
+var LANG='en';
+try{var saved=localStorage.getItem('vayu-lang');if(saved&&T[saved])LANG=saved;}catch(e){}
+function t(k,v){
+  var s=(T[LANG][k]!=null)?T[LANG][k]:T.en[k];
+  if(s==null)return k;
+  if(v)s=s.replace(/\{(\w+)\}/g,function(m,p){return v[p]!=null?v[p]:m;});
+  return s;
+}
+var FM='"IBM Plex Mono","Noto Sans Devanagari","Noto Sans Oriya",monospace',
+    FS='"IBM Plex Sans","Noto Sans Devanagari","Noto Sans Oriya",sans-serif';
+
+var root=document.documentElement, tIcon=document.getElementById('themeIcon');
+function applyLang(l){
+  if(T[l])LANG=l;
+  root.setAttribute('lang',LANG);
+  document.title=t('pageTitle');
+  document.querySelectorAll('[data-i18n]').forEach(function(el){el.textContent=t(el.getAttribute('data-i18n'));});
+  document.querySelectorAll('[data-i18n-html]').forEach(function(el){el.innerHTML=t(el.getAttribute('data-i18n-html'));});
+  document.querySelectorAll('.lang .seg button').forEach(function(b){
+    b.setAttribute('aria-pressed',b.getAttribute('data-lang')===LANG?'true':'false');});
+  try{localStorage.setItem('vayu-lang',LANG);}catch(e){}
+  serSupportNote();
+  renderAll();
+}
+document.querySelectorAll('.lang .seg button').forEach(function(b){
+  b.addEventListener('click',function(){applyLang(b.getAttribute('data-lang'));});});
+
+/* ======================= THEME ======================= */
+function setTheme(th){root.setAttribute('data-theme',th);tIcon.textContent=th==='dark'?'☾':'☀';draw();}
+document.getElementById('themeBtn').addEventListener('click',function(){
+  setTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+function cv(n){return getComputedStyle(root).getPropertyValue(n).trim();}
+
+var MODE='sim',running=false,t0=Date.now(),tick=0,scn=0;
+
+var SENSORS=[
+  {k:'ch4',u:'%',base:.42,warn:1.0,bad:1.25,max:2,dec:2},
+  {k:'co',u:'ppm',base:12,warn:50,bad:100,max:150,dec:0},
+  {k:'co2',u:'%',base:.31,warn:.5,bad:1.4,max:2,dec:2},
+  {k:'o2',u:'%',base:20.7,warn:19.5,bad:19,max:21,inv:1,dec:1},
+  {k:'tmp',u:'°C',base:29.4,warn:33.5,bad:37.5,max:45,dec:1},
+  {k:'rh',u:'%',base:78,warn:88,bad:94,max:100,dec:0},
+  {k:'vel',u:'m/s',base:1.24,warn:.5,bad:.3,max:3,inv:1,dec:2},
+  /* barometric pressure: level shown in the strip, status comes from its rate of change (dprs) */
+  {k:'prs',u:'hPa',base:1042.0,warn:0,bad:0,max:1100,dec:1,pull:.004},
+  /* piezo vibration (peak particle velocity) — shown in the wall-motion card */
+  {k:'vib',u:'mm/s',base:1.9,warn:5,bad:8,max:12,dec:2,strip:0,wall:1},
+  /* derived channels, computed not measured */
+  {k:'tilt',u:'°',base:0,warn:.5,bad:1,max:2,dec:2,strip:0,der:1,wall:1},
+  {k:'gyr',u:'°/s',base:.05,warn:.5,bad:2,max:5,dec:2,strip:0,der:1,wall:1},
+  {k:'dprs',u:'hPa/h',base:0,warn:-1,bad:-2,max:5,inv:1,dec:2,strip:0,der:1,baro:1}
+];
+/* gyro raw state: angular rate per axis (°/s) and tilt from baseline (°); pressure samples for the rate */
+var GY={gx:0,gy:0,gz:0,tx:0,ty:0},PRS=[];
+function resetAux(){GY.gx=GY.gy=GY.gz=GY.tx=GY.ty=0;PRS=[];HIST.tx=[];HIST.ty=[];}
+function prsRate(){ // least-squares slope over the last 10 minutes, hPa per hour
+  var now=PRS.length?PRS[PRS.length-1].t:0,pts=PRS.filter(function(p){return now-p.t<=600000;});
+  if(pts.length<5||pts[pts.length-1].t-pts[0].t<120000)return 0; // need ≥2 min of data for a meaningful rate
+  var n=pts.length,mt=0,mv=0,num=0,den=0;
+  pts.forEach(function(p){mt+=p.t;mv+=p.v;});mt/=n;mv/=n;
+  pts.forEach(function(p){num+=(p.t-mt)*(p.v-mv);den+=(p.t-mt)*(p.t-mt);});
+  return den?num/den*3600000:0;
+}
+function derive(){
+  S.tilt=Math.sqrt(GY.tx*GY.tx+GY.ty*GY.ty);
+  S.gyr=Math.sqrt(GY.gx*GY.gx+GY.gy*GY.gy+GY.gz*GY.gz);
+  S.dprs=prsRate();
+}
+function pushHist(){
+  SENSORS.forEach(function(s){HIST[s.k].push(S[s.k]);if(HIST[s.k].length>HLEN)HIST[s.k].shift();});
+  HIST.tx.push(GY.tx);HIST.ty.push(GY.ty);if(HIST.tx.length>HLEN){HIST.tx.shift();HIST.ty.shift();}
+}
+function sn(k){return t('s_'+k);}
+var S={},HIST={},HLEN=60;
+SENSORS.forEach(function(s){S[s.k]=s.base;HIST[s.k]=[];});
+resetAux();
+
+/* nodes positioned on the panel plan (0-1 normalised) */
+var NODES=[
+  {id:'N-101',gx:3,  gy:0,  dir:'w',rssi:-58,w:1.00},
+  {id:'N-102',gx:5,  gy:1,  dir:'w',rssi:-64,w:.82},
+  {id:'N-103',gx:6,  gy:2.5,dir:'w',rssi:-71,w:.55},
+  {id:'N-104',gx:2,  gy:3.5,dir:'w',rssi:-78,w:.70},
+  {id:'N-105',gx:3,  gy:4,  dir:'e',rssi:-61,w:.35},
+  {id:'N-106',gx:1,  gy:1.5,dir:'e',rssi:-69,w:.45}
+];
+var ALERTS=[];
+function rnd(){return Math.random()*2-1;}
+function clamp(x){return Math.max(0,Math.min(1,x));}
+
+function step(){
+  tick++;var d=scn?1:0;
+  SENSORS.forEach(function(s){
+    if(s.der)return;
+    var v=S[s.k],pull=(s.base-v)*(s.pull||.05),nz;
+    switch(s.k){
+      case 'ch4':nz=rnd()*.035+d*.055;break;  case 'co':nz=rnd()*1.4+d*2.4;break;
+      case 'co2':nz=rnd()*.02+d*.022;break;   case 'o2':nz=rnd()*.05-d*.035;break;
+      case 'tmp':nz=rnd()*.18+d*.10;break;    case 'rh':nz=rnd()*.7+d*.35;break;
+      case 'vel':nz=rnd()*.05-d*.028;break;   case 'vib':nz=rnd()*.30+d*.30;break;
+      case 'prs':nz=rnd()*.03-d*.042;break;
+      default:nz=rnd()*.1;
+    }
+    S[s.k]=Math.max(0,Math.min(s.max,v+pull+nz));
+  });
+  // gyro: small noise, bursts that track the piezo during a strata event; tilt creeps under load
+  var burst=d*clamp((S.vib-2)/6);
+  GY.gx=rnd()*.04+rnd()*.9*burst; GY.gy=rnd()*.04+rnd()*.7*burst; GY.gz=rnd()*.03+rnd()*.4*burst;
+  GY.tx+=rnd()*.006+d*.019-GY.tx*.012; GY.ty+=rnd()*.005+d*.009-GY.ty*.012;
+  PRS.push({t:tick*60000,v:S.prs});if(PRS.length>40)PRS.shift(); // one sim tick = one minute
+  derive();pushHist();
+  if(scn)scn--;
+  NODES.forEach(function(n){n.rssi=Math.max(-95,Math.min(-45,n.rssi+rnd()*1.6));});
+}
+function stOf(s,v){ if(s.k==='prs')return stOf(sens('dprs'),S.dprs);
+  if(s.inv) return v<=s.bad?'bad':(v<=s.warn?'warn':'ok');
+  return v>=s.bad?'bad':(v>=s.warn?'warn':'ok'); }
+function sens(k){return SENSORS.filter(function(x){return x.k===k})[0];}
+function norm(k){var s=sens(k),v=S[k];
+  if(s.inv)return clamp((s.warn-v)/(s.warn-s.bad+1e-6));
+  return clamp((v-s.base)/(s.bad-s.base+1e-6));}
+function trend(k){var h=HIST[k];if(h.length<12)return 0;
+  var a=h.slice(-4).reduce(function(p,c){return p+c},0)/4,
+      b=h.slice(-12,-8).reduce(function(p,c){return p+c},0)/4,s=sens(k);
+  return clamp((a-b)/((s.bad-s.base)*.35+1e-6));}
+var W=[{k:'vib',w:.28},{k:'vibTr',w:.17},{k:'ch4',w:.16},{k:'tilt',w:.12},{k:'tmp',w:.08},{k:'co',w:.07},{k:'dprs',w:.07},{k:'rh',w:.05}];
+function contrib(){return W.map(function(x){
+  var raw=x.k==='vibTr'?trend('vib'):norm(x.k);return {n:t('d_'+x.k),wt:raw*x.w};});}
+var CRIT=['ch4','co','o2','vib','tilt'];
+function breached(){return CRIT.filter(function(k){return stOf(sens(k),S[k])==='bad';});}
+function idxNow(){var s=0;contrib().forEach(function(x){s+=x.wt;});
+  var i=Math.round(clamp(s)*100);return breached().length?Math.max(i,78):i;}
+function fcast(h){var i=idxNow(),mom=trend('vib')*45+trend('tilt')*20+trend('ch4')*20,dp=1-Math.exp(-h/9);
+  var mid=clamp((i+mom*dp*1.15)/100)*100,bd=Math.min(26,4+h*.85);
+  return {mid:Math.round(mid),lo:Math.max(0,Math.round(mid-bd)),hi:Math.min(100,Math.round(mid+bd)),
+          conf:Math.max(48,Math.round(96-h*1.6))};}
+function cls(i){ if(i<28)return{t:t('c_stable'),c:'--mint',tone:'ok'};
+  if(i<52)return{t:t('c_watch'),c:'--cyan',tone:'sim'};
+  if(i<74)return{t:t('c_elevated'),c:'--gold',tone:'warn'};
+  return{t:t('c_action'),c:'--coral',tone:'bad'};}
+/* per-node index: global index scaled by that node's exposure weight */
+function nodeIdx(n){return Math.round(clamp(idxNow()/100*(0.45+n.w*0.65))*100);}
+
+function renderStrip(){
+  var h='';
+  var live=0;
+  SENSORS.forEach(function(s){
+    if(s.strip===0)return;
+    var on=running&&hasCh(s.k);if(on)live++;
+    var v=S[s.k],st=stOf(s,v),pct=s.inv?clamp(1-v/s.max)*100:clamp(v/s.max)*100,lim=t('l_'+s.k);
+    if(s.k==='prs'){ // bar shows how fast pressure is falling; caption shows the rate
+      var r=S.dprs;pct=clamp(-r/3)*100;
+      lim=(r<-.05?'↓ ':(r>.05?'↑ ':'→ '))+Math.abs(r).toFixed(2)+' hPa/h';
+    }
+    h+='<div class="sq2" data-s="'+(on?st:'ok')+'"><div class="k">'+sn(s.k)+'</div>'+
+       '<div class="v">'+(on?v.toFixed(s.dec):'--')+'<span class="u">'+s.u+'</span></div>'+
+       '<div class="bar"><div class="fil" style="width:'+(on?pct:0)+'%"></div></div>'+
+       '<div class="lim">'+(on||s.k!=='prs'?lim:'—')+'</div></div>';
+  });
+  document.getElementById('strip').innerHTML=h;
+  document.getElementById('sensRt').textContent=running?t('chLiveN',{n:live}):t('offline');
+}
+
+function renderHero(){
+  var iEl=document.getElementById('hIdx'),cEl=document.getElementById('hCls'),
+      sEl=document.getElementById('hSub'),fEl=document.getElementById('hFill');
+  if(!running){iEl.textContent='—';cEl.textContent='—';sEl.textContent=t(MODE==='serial'?'awaitingSer':'awaitingGw');
+    fEl.style.width='0';document.getElementById('fcs').innerHTML='';document.getElementById('drvList').innerHTML='';return;}
+  var i=idxNow(),k=cls(i);
+  iEl.textContent=i;iEl.style.color='var('+k.c+')';
+  cEl.textContent=k.t;cEl.style.color='var('+k.c+')';
+  fEl.style.width=i+'%';fEl.style.background='var('+k.c+')';
+  var br=breached(),f6=fcast(6);
+  if(br.length){
+    var nm=br.map(sn).join(', ');
+    sEl.innerHTML='<b style="color:var(--coral)">'+t('breachA',{n:nm})+'</b> '+t('breachB');
+  }else{
+    sEl.textContent=f6.mid>i+6?t('trUp'):(f6.mid<i-6?t('trDown'):t('trFlat'));
+  }
+  var rc=document.getElementById('riskChip');
+  document.getElementById('riskTxt').textContent=k.t;rc.setAttribute('data-t',k.tone);
+  var fh='';[1,6,24].forEach(function(h){var f=fcast(h),kk=cls(f.mid);
+    fh+='<div class="fc"><div class="h">+'+h+' '+t(h>1?'hrs':'hr')+'</div>'+
+        '<div class="v" style="color:var('+kk.c+')">'+f.mid+'</div>'+
+        '<div class="b" style="color:var('+kk.c+')">'+kk.t+'</div>'+
+        '<div class="c">'+f.lo+'–'+f.hi+' · '+f.conf+'%</div></div>';});
+  document.getElementById('fcs').innerHTML=fh;
+  var c=contrib(),tot=0;c.forEach(function(x){tot+=x.wt;});
+  var dh='';c.sort(function(a,b){return b.wt-a.wt;}).forEach(function(x){
+    var sh=tot>0?x.wt/tot*100:0,col=sh>34?'--coral':(sh>22?'--gold':'--cyan');
+    dh+='<div class="dr"><span class="n">'+x.n+'</span><span class="t">'+
+        '<span class="f" style="width:'+sh.toFixed(0)+'%;background:var('+col+')"></span></span>'+
+        '<span class="p">'+sh.toFixed(0)+'%</span></div>';});
+  document.getElementById('drvList').innerHTML=dh;
+  document.getElementById('hzRt').textContent=t('updated',{t:new Date().toLocaleTimeString([],{hour12:false})});
+}
+
+/* alerts store a message key + values, and are worded at render time in the current language */
+function pushAl(sev,key,vars){ALERTS.unshift({t:new Date(),s:sev,k:key,v:vars||{}});if(ALERTS.length>40)ALERTS.pop();}
+function alText(a){
+  var v={};for(var p in a.v)v[p]=a.v[p];
+  if(v.sk)v.s=sn(v.sk);
+  if(v.zi!=null)v.z=t('zone'+v.zi);
+  if(v.m!=null)v.m=esc(v.m);
+  return t(a.k,v);
+}
+function renderAl(){
+  var el=document.getElementById('alList');
+  if(!running){el.innerHTML='<div class="empty"><h4>'+t('noAlTitle')+'</h4><p>'+t('noAlBody')+'</p></div>';
+    document.getElementById('alRt').textContent='—';return;}
+  var h='';ALERTS.slice(0,14).forEach(function(a){
+    var c=a.s==='c'?'sv-c':(a.s==='w'?'sv-w':'sv-i'),l=t(a.s==='c'?'c_action':(a.s==='w'?'c_watch':'c_info'));
+    h+='<div class="al"><time>'+a.t.toLocaleTimeString([],{hour12:false})+'</time>'+
+       '<span class="sev '+c+'">'+l+'</span><span class="m">'+alText(a)+'</span></div>';});
+  el.innerHTML=h||'<div class="empty"><h4>'+t('clearTitle')+'</h4><p>'+t('clearBody')+'</p></div>';
+  document.getElementById('alRt').textContent=t('events',{n:ALERTS.length});
+}
+
+/* ---------- panel plan drawing ---------- */
+function fit(c,hAttr){
+  var d=window.devicePixelRatio||1,pe=c.parentElement,ps=getComputedStyle(pe);
+  var w=pe.clientWidth-parseFloat(ps.paddingLeft)-parseFloat(ps.paddingRight);
+  var h=hAttr;
+  if(!h){ h=pe.clientHeight-parseFloat(ps.paddingTop)-parseFloat(ps.paddingBottom)-46; if(h<170)h=170; }
+  if(w<80)w=80;
+  if(c._w!==w||c._h!==h||c._d!==d){c.style.width=w+'px';c.style.height=h+'px';c.width=w*d;c.height=h*d;c._w=w;c._h=h;c._d=d;}
+  var x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);return {x:x,w:w,h:h};
+}
+/* ---------- panel plan: bord-and-pillar layout, nodes sit in the roadways ---------- */
+var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+var NPOS=[],HOV=null,MOUSE=null;
+function hexA(h,a){h=h.replace('#','');if(h.length===3)h=h.split('').map(function(c){return c+c;}).join('');
+  var n=parseInt(h,16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';}
+function rr(x,px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);
+  x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
+function tag(x,cx,cy,txt,font,fg,bg,bd){ // small centred label pill
+  x.font=font;var w=x.measureText(txt).width+14,h=18;
+  rr(x,cx-w/2,cy-h/2,w,h,4);x.fillStyle=bg;x.fill();if(bd){x.strokeStyle=bd;x.lineWidth=1;x.stroke();}
+  x.fillStyle=fg;x.textAlign='center';x.textBaseline='middle';x.fillText(txt,cx,cy+.5);x.textBaseline='alphabetic';
+  return w;}
+function drawMine(anim){
+  var c=document.getElementById('mineCv');if(!c||!c.offsetParent)return;
+  var f=fit(c),x=f.x,W=f.w,H=f.h,tm=RM?0:performance.now()/1000,dark=root.getAttribute('data-theme')==='dark';
+  x.clearRect(0,0,W,H);
+  var compact=W<620,pad=6,top=34,bot=30,side=compact?16:30;
+  var MX=pad,MY=pad,MW=W-pad*2,MH=H-pad*2;
+  var L=MX+side,R=MX+MW-side,T=MY+top,B=MY+MH-bot,cols=6,rows=4;
+  var g=Math.max(8,Math.min(15,(R-L)*.024)),h2=g/2,xs=[],ys=[],i,j;
+  for(j=0;j<=cols;j++)xs.push(L+(R-L)*j/cols);
+  for(i=0;i<=rows;i++)ys.push(T+(B-T)*i/rows);
+  var surf=cv('--surface'),dim=cv('--dim'),line=cv('--line'),line2=cv('--line2'),air=cv('--air');
+
+  x.save();rr(x,MX,MY,MW,MH,6);x.clip();
+  // solid coal body with a faint cleat grain
+  var gr=x.createLinearGradient(0,MY,0,MY+MH);gr.addColorStop(0,cv('--rock2'));gr.addColorStop(1,cv('--rock'));
+  x.fillStyle=gr;x.fillRect(MX,MY,MW,MH);
+  x.strokeStyle=line;x.lineWidth=1;x.globalAlpha=.45;x.beginPath();
+  for(var k=-MH;k<MW;k+=10){x.moveTo(MX+k,MY+MH);x.lineTo(MX+k+MH*.55,MY);}x.stroke();x.globalAlpha=1;
+
+  // roadways (galleries + crosscuts) and the two mains leaving the panel
+  x.fillStyle=cv('--void');
+  ys.forEach(function(y){x.fillRect(xs[0]-h2,y-h2,xs[cols]-xs[0]+g,g);});
+  xs.forEach(function(xx){x.fillRect(xx-h2,ys[0]-h2,g,ys[rows]-ys[0]+g);});
+  [3,6].forEach(function(j){x.fillRect(xs[j]-h2,ys[rows],g,MY+MH-ys[rows]);});
+  // pillar top-left highlight for a little depth
+  x.strokeStyle=dark?'rgba(255,255,255,.07)':'rgba(255,255,255,.75)';x.lineWidth=1;
+  for(i=0;i<rows;i++)for(j=0;j<cols;j++){
+    var px0=xs[j]+h2,py0=ys[i]+h2,pw=xs[j+1]-xs[j]-g,ph=ys[i+1]-ys[i]-g;
+    x.beginPath();x.moveTo(px0+.5,py0+ph-2);x.lineTo(px0+.5,py0+.5);x.lineTo(px0+pw-2,py0+.5);x.stroke();}
+  // survey centre-lines
+  x.save();x.setLineDash([2,7]);x.strokeStyle=line2;x.globalAlpha=.55;x.beginPath();
+  ys.forEach(function(y){x.moveTo(xs[0],y);x.lineTo(xs[cols],y);});
+  xs.forEach(function(xx){x.moveTo(xx,ys[0]);x.lineTo(xx,ys[rows]);});x.stroke();x.restore();
+
+  // goaf: worked-out area, hatched, sealed at the roadways that enter it
+  var gx0=MX,gx1=xs[2]-h2,gy0=ys[3]-h2,gy1=MY+MH;
+  x.fillStyle=cv('--rock');x.fillRect(gx0,gy0,gx1-gx0,gy1-gy0);
+  x.save();x.beginPath();x.rect(gx0,gy0,gx1-gx0,gy1-gy0);x.clip();
+  x.strokeStyle=dim;x.globalAlpha=.32;x.lineWidth=1;x.beginPath();
+  for(k=-(gy1-gy0);k<gx1-gx0;k+=6){x.moveTo(gx0+k,gy1);x.lineTo(gx0+k+(gy1-gy0),gy0);}x.stroke();x.restore();
+  x.save();x.setLineDash([5,4]);x.strokeStyle=dim;x.globalAlpha=.8;x.lineWidth=1.2;x.beginPath();
+  x.moveTo(gx0,gy0+.5);x.lineTo(gx1+.5,gy0+.5);x.lineTo(gx1+.5,gy1);x.stroke();x.restore();
+  x.strokeStyle=cv('--muted');x.lineWidth=3;x.lineCap='butt';x.beginPath();
+  [3,4].forEach(function(r){x.moveTo(gx1,ys[r]-h2+1);x.lineTo(gx1,ys[r]+h2-1);});
+  [0,1].forEach(function(cc){if(xs[cc]-h2>gx0){x.moveTo(xs[cc]-h2+1,gy0);x.lineTo(xs[cc]+h2-1,gy0);}});
+  x.stroke();
+  x.font='600 10.5px '+FM;var gw=x.measureText(t('cvGoaf')).width+14;
+  tag(x,gx0+gw/2+8,gy1-13,t('cvGoaf'),'600 10.5px '+FM,dim,hexA(surf,.75));
+
+  // advancing face: serrated coal face along the top gallery
+  var fy=ys[0]-h2-1;x.strokeStyle=cv('--muted');x.lineWidth=1.3;x.beginPath();
+  for(var fx=xs[0]-h2,z=0;fx<=xs[cols]+h2;fx+=5,z++)(z?x.lineTo:x.moveTo).call(x,fx,fy-(z%2?3:0));x.stroke();
+  tag(x,(xs[4]+xs[5])/2,MY+top/2-1,'▲  '+t('cvFace'),'600 10.5px '+FM,cv('--muted'),hexA(surf,.85),line);
+
+  // ventilation: intake up the centre, across the face, out the return
+  var AP=[[xs[3],MY+MH+2],[xs[3],ys[0]],[xs[6],ys[0]],[xs[6],MY+MH+2]];
+  function airPath(){x.beginPath();AP.forEach(function(p,n){n?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);});}
+  x.lineJoin='round';x.lineCap='butt';x.strokeStyle=hexA(air,dark?.18:.16);x.lineWidth=g*.62;airPath();x.stroke();
+  x.save();x.setLineDash([.1,11]);x.lineDashOffset=-(tm*24)%11.1;x.lineCap='round';x.lineWidth=3.2;
+  x.strokeStyle=hexA(air,.95);airPath();x.stroke();x.restore();
+  function chev(cx,cy,a){x.save();x.translate(cx,cy);x.rotate(a);x.strokeStyle=air;x.lineWidth=2;x.lineCap='round';
+    x.beginPath();x.moveTo(-3,-5);x.lineTo(3,0);x.lineTo(-3,5);x.stroke();x.restore();}
+  chev(xs[3],(ys[1]+ys[2])/2,-Math.PI/2);chev((xs[4]+xs[5])/2,ys[0],0);chev(xs[6],(ys[1]+ys[2])/2,Math.PI/2);
+  var bl=MY+MH-12;
+  tag(x,xs[3],bl,'↑ '+t('cvIntake'),'600 10.5px '+FM,air,hexA(surf,.92),hexA(air,.45));
+  var rw=0;x.font='600 10.5px '+FM;rw=x.measureText('↓ '+t('cvReturn')).width+14;
+  tag(x,Math.min(xs[6],MX+MW-rw/2-4),bl,'↓ '+t('cvReturn'),'600 10.5px '+FM,air,hexA(surf,.92),hexA(air,.45));
+
+  // north arrow + scale bar (one pillar pitch)
+  var nx=MX+MW-16,ny=MY+17;x.fillStyle=dim;x.beginPath();x.moveTo(nx,ny-9);x.lineTo(nx+5,ny+5);x.lineTo(nx,ny+2);x.lineTo(nx-5,ny+5);x.closePath();x.fill();
+  x.font='600 10px '+FM;x.textAlign='right';x.fillText('N',nx-9,ny+4);
+  if(!compact){var sx=MX+12,sy=MY+17,sw=xs[1]-xs[0];x.strokeStyle=dim;x.lineWidth=1.2;x.beginPath();
+    x.moveTo(sx,sy-3);x.lineTo(sx,sy+3);x.moveTo(sx,sy);x.lineTo(sx+sw,sy);x.moveTo(sx+sw,sy-3);x.lineTo(sx+sw,sy+3);x.stroke();
+    x.fillStyle=dim;x.textAlign='left';x.fillText(t('cvScale'),sx+sw+7,sy+4);}
+  x.restore();
+  x.strokeStyle=line;x.lineWidth=1;rr(x,MX+.5,MY+.5,MW-1,MH-1,6);x.stroke();
+
+  if(!running){
+    NPOS=[];tag(x,W/2,H/2-6,t('cvNoNode'),'13px '+FS,dim,hexA(surf,.94),line);
+    if(!anim)document.getElementById('mineRt').textContent='—';
+    return;
+  }
+
+  // nodes
+  var vis=visNodes(),now=Date.now();NPOS=[];
+  vis.forEach(function(n){
+    var px=L+(R-L)*n.gx/cols,py=T+(B-T)*n.gy/rows,ni=nodeIdx(n),kk=cls(ni),stale=MODE==='serial'&&now-n.seen>30000;
+    NPOS.push({n:n,px:px,py:py,ni:ni,k:kk,col:stale?dim:cv(kk.c),stale:stale});});
+  // hazard glow on the roadway
+  x.save();rr(x,MX,MY,MW,MH,6);x.clip();if(dark)x.globalCompositeOperation='lighter';
+  NPOS.forEach(function(p){if(p.stale)return;var rad=26+p.ni*.55,gg=x.createRadialGradient(p.px,p.py,0,p.px,p.py,rad);
+    gg.addColorStop(0,hexA(p.col,dark?.30:.22));gg.addColorStop(1,hexA(p.col,0));x.fillStyle=gg;
+    x.beginPath();x.arc(p.px,p.py,rad,0,Math.PI*2);x.fill();});
+  x.restore();
+  // markers
+  NPOS.forEach(function(p){
+    if(!p.stale&&p.ni>=52){ // pulse for Elevated / Action
+      var ph=RM?.35:((tm*.8+p.n.gx*.13)%1);
+      x.strokeStyle=hexA(p.col,(1-ph)*.7);x.lineWidth=2;x.beginPath();x.arc(p.px,p.py,10+ph*16,0,Math.PI*2);x.stroke();}
+    x.fillStyle=surf;x.beginPath();x.arc(p.px,p.py,9,0,Math.PI*2);x.fill();
+    x.save();if(p.stale)x.setLineDash([2,2]);x.strokeStyle=p.col;x.lineWidth=1.8;
+    x.beginPath();x.arc(p.px,p.py,9,0,Math.PI*2);x.stroke();x.restore();
+    x.fillStyle=p.col;x.beginPath();x.arc(p.px,p.py,4.6,0,Math.PI*2);x.fill();
+    if(HOV===p.n.id){x.strokeStyle=cv('--text');x.lineWidth=1.5;x.beginPath();x.arc(p.px,p.py,13.5,0,Math.PI*2);x.stroke();}
+  });
+  // label tags: ID + index, location underneath; accent bar in the status colour
+  NPOS.forEach(function(p){
+    var f1='600 11px '+FM,f2='11px '+FS,id=p.n.id,num=String(p.ni),loc=t('loc_'+id);
+    x.font=f1;var w1=x.measureText(id+'  ').width,wn=x.measureText(num).width;
+    x.font=f2;var w2=compact?0:x.measureText(loc).width;
+    var w=Math.max(w1+wn,w2)+21,h=compact?20:34;
+    var bx=p.n.dir==='w'?p.px-16-w:p.px+16,by=p.py-h/2;
+    bx=Math.max(MX+4,Math.min(MX+MW-w-4,bx));by=Math.max(MY+4,Math.min(MY+MH-h-4,by));
+    p.box=[bx,by,w,h];
+    rr(x,bx,by,w,h,5);x.fillStyle=hexA(surf,.93);x.fill();
+    x.strokeStyle=HOV===id?line2:line;x.lineWidth=1;x.stroke();
+    rr(x,bx+5,by+5,3,h-10,1.5);x.fillStyle=p.col;x.fill();
+    x.textAlign='left';x.font=f1;x.fillStyle=cv('--text');var ty=compact?by+14:by+14.5;
+    x.fillText(id,bx+13,ty);x.fillStyle=p.col;x.fillText(num,bx+13+w1,ty);
+    if(!compact){x.font=f2;x.fillStyle=dim;x.fillText(loc,bx+13,by+28);}
+  });
+  if(!anim){
+    document.getElementById('mineRt').textContent=t('mineRt',{n:vis.length,
+      e:vis.filter(function(n){return nodeIdx(n)>=52;}).length});
+    document.getElementById('fNodes').textContent=vis.length+'/'+NODES.length;
+    if(HOV)showTip();
+  }
+}
+function hitNode(mx,my){
+  var hit=null,bd=20;
+  NPOS.forEach(function(p){var d=Math.hypot(p.px-mx,p.py-my);if(d<bd){bd=d;hit=p;}});
+  if(!hit)NPOS.forEach(function(p){var b=p.box;if(b&&mx>=b[0]&&mx<=b[0]+b[2]&&my>=b[1]&&my<=b[1]+b[3])hit=p;});
+  return hit;
+}
+function showTip(){
+  var tip=document.getElementById('mineTip'),c=document.getElementById('mineCv');
+  var p=NPOS.filter(function(q){return q.n.id===HOV;})[0];
+  if(!p){tip.classList.remove('on');return;}
+  var ago=MODE==='serial'&&p.n.seen?' · '+t('ttAgo',{s:Math.max(0,Math.round((Date.now()-p.n.seen)/1000))}):'';
+  tip.innerHTML='<div class="tt-h"><b>'+p.n.id+'</b><span class="tt-b" style="color:'+p.col+';background:'+hexA(p.col,.14)+'">'+
+    p.k.t+' · '+p.ni+'</span></div><div class="tt-l">'+t('loc_'+p.n.id)+'</div>'+
+    '<div class="tt-m">'+t('ttSig')+' '+Math.round(p.n.rssi)+' dBm'+ago+'</div>';
+  var host=tip.parentElement,tw=tip.offsetWidth,th=tip.offsetHeight;
+  var lx=c.offsetLeft+p.px+18,ly=c.offsetTop+p.py-th/2;
+  if(lx+tw>host.clientWidth-6)lx=c.offsetLeft+p.px-18-tw;
+  ly=Math.max(4,Math.min(host.clientHeight-th-4,ly));
+  tip.style.left=lx+'px';tip.style.top=ly+'px';tip.classList.add('on');
+}
+(function(){
+  var c=document.getElementById('mineCv');
+  c.addEventListener('mousemove',function(e){
+    var r=c.getBoundingClientRect(),h=hitNode(e.clientX-r.left,e.clientY-r.top),id=h?h.n.id:null;
+    c.style.cursor=h?'pointer':'default';
+    if(id!==HOV){HOV=id;drawMine(true);}
+    if(HOV)showTip();else document.getElementById('mineTip').classList.remove('on');
+  });
+  c.addEventListener('mouseleave',function(){HOV=null;document.getElementById('mineTip').classList.remove('on');drawMine(true);});
+  // touch: tap a node to show its details
+  c.addEventListener('click',function(e){var r=c.getBoundingClientRect(),h=hitNode(e.clientX-r.left,e.clientY-r.top);
+    HOV=h?h.n.id:null;if(HOV)showTip();else document.getElementById('mineTip').classList.remove('on');drawMine(true);});
+  // animate airflow and pulses (~30 fps), skipped when motion is reduced or the tab is hidden
+  var lastF=0;
+  function loop(ts){
+    if(!RM&&ts-lastF>33&&document.visibilityState==='visible'&&document.getElementById('app').classList.contains('on')){
+      lastF=ts;drawMine(true);}
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+function drawTrend(){
+  var c=document.getElementById('trendCv');if(!c||!c.offsetParent)return;
+  var f=fit(c,140),x=f.x,W=f.w,H=f.h;
+  x.clearRect(0,0,W,H);
+  var pad={l:10,r:10,t:12,b:20},pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+  x.strokeStyle=cv('--line');x.lineWidth=1;
+  [0,.5,1].forEach(function(v){var y=pad.t+ph*v;x.beginPath();x.moveTo(pad.l,y);x.lineTo(pad.l+pw,y);x.stroke();});
+  if(!running){x.fillStyle=cv('--dim');x.textAlign='center';x.font='13px '+FS;
+    x.fillText(t('cvNoTrend'),W/2,H/2);return;}
+  [{k:'vib',c:'--cyan'},{k:'ch4',c:'--gold'},{k:'co',c:'--coral'}].forEach(function(sr){
+    var h=HIST[sr.k];if(h.length<2||!hasCh(sr.k))return;var s=sens(sr.k);
+    x.strokeStyle=cv(sr.c);x.lineWidth=2;x.beginPath();
+    h.forEach(function(v,i){var xx=pad.l+(i/(HLEN-1))*pw,yy=pad.t+ph-clamp(v/s.max)*ph;
+      i?x.lineTo(xx,yy):x.moveTo(xx,yy);});
+    x.stroke();});
+  x.fillStyle=cv('--dim');x.font='11px '+FM;
+  x.textAlign='left';x.fillText(t('cvAgo'),pad.l,H-5);
+  x.textAlign='right';x.fillText(t('cvNow'),pad.l+pw,H-5);
+}
+function draw(){drawMine();drawTrend();if(document.getElementById('app').classList.contains('on')){drawPiezo(running&&hasCh('vib'));drawGyro(running&&(hasCh('tilt')||hasCh('gyr')));}}
+
+var last={},PEND={};
+/* gyro rate is bursty: judge it on a short running mean */
+function gyrS(){var h=HIST.gyr.slice(-5);return h.length?h.reduce(function(a,b){return a+b;},0)/h.length:S.gyr;}
+function watch(){
+  SENSORS.forEach(function(s){
+    if(s.k==='prs'||!hasCh(s.k))return; // pressure alerts come from its trend
+    var st=stOf(s,s.k==='gyr'?gyrS():S[s.k]);
+    if(!last[s.k]){last[s.k]=st;return;}
+    if(st===last[s.k]){PEND[s.k]=0;return;}
+    // debounce: a new state must hold for two readings (escalation to Action is immediate)
+    PEND[s.k]=(PEND[s.k]||0)+1;if(PEND[s.k]<2&&st!=='bad')return;PEND[s.k]=0;
+    if(true){
+      var vv={sk:s.k,v:S[s.k].toFixed(s.dec),u:s.u};
+      if(st==='bad')pushAl('c',s.wall?'aBadWall':(s.baro?'aBadBaro':'aBad'),vv);
+      else if(st==='warn')pushAl('w',s.baro?'aWarnBaro':(s.inv?'aWarnLow':'aWarn'),vv);
+      else pushAl('i','aOk',vv);
+    }
+    last[s.k]=st;});
+  var f=fcast(6);
+  if(f.mid>=74&&tick%20===0)pushAl('c','aFc74');
+  else if(f.mid>=52&&tick%30===0)pushAl('w','aFc52');
+}
+function stTag(el,pane,st,on){
+  var c={ok:'--mint',warn:'--gold',bad:'--coral'}[st],k={ok:'c_stable',warn:'c_watch',bad:'c_action'}[st];
+  pane.setAttribute('data-s',on?st:'ok');
+  if(!on){el.textContent='';el.style.background='transparent';return;}
+  el.textContent=t(k);el.style.color='var('+c+')';el.style.background='var('+c+'F)';
+}
+function renderMotion(){
+  var pzOn=running&&hasCh('vib'),gyOn=running&&(hasCh('tilt')||hasCh('gyr'));
+  document.getElementById('motRt').textContent=running?t('motLive'):t('offline');
+  // piezo
+  var sv=sens('vib'),vst=stOf(sv,S.vib),hv=HIST.vib.slice(-30),pk=hv.length?Math.max.apply(null,hv):0;
+  var pv=document.getElementById('pzV');
+  pv.textContent=pzOn?S.vib.toFixed(2):'--';pv.style.color=pzOn&&vst!=='ok'?'var('+(vst==='bad'?'--coral':'--gold')+')':'';
+  document.getElementById('pzPk').textContent=pzOn?t('peak',{v:pk.toFixed(2)}):'';
+  stTag(document.getElementById('pzSt'),document.getElementById('pzPane'),vst,pzOn);
+  // gyro
+  var tst=stOf(sens('tilt'),S.tilt),gst=stOf(sens('gyr'),gyrS()),wst=tst==='bad'||gst==='bad'?'bad':(tst==='warn'||gst==='warn'?'warn':'ok');
+  var tv=document.getElementById('tiltV');
+  tv.textContent=gyOn?S.tilt.toFixed(2):'--';tv.style.color=gyOn&&tst!=='ok'?'var('+(tst==='bad'?'--coral':'--gold')+')':'';
+  function sg(v){return (v>=0?'+':'−')+Math.abs(v).toFixed(2);}
+  document.getElementById('tiltXY').textContent=gyOn?t('tiltXY',{x:sg(GY.tx),y:sg(GY.ty)}):'—';
+  stTag(document.getElementById('gySt'),document.getElementById('gyPane'),wst,gyOn);
+  var ah='';[['X',GY.gx],['Y',GY.gy],['Z',GY.gz]].forEach(function(a){
+    var v=gyOn?a[1]:0,f=Math.min(1,Math.abs(v)/2)*50,col=Math.abs(v)>=2?'--coral':(Math.abs(v)>=.5?'--gold':'--cyan');
+    ah+='<div class="ax"><span>'+a[0]+'</span><span class="tr"><i style="background:var('+col+');'+
+      (v>=0?'left:50%;width:'+f+'%':'right:50%;width:'+f+'%')+'"></i></span>'+
+      '<span class="v">'+(gyOn?sg(v)+' °/s':'--')+'</span></div>';});
+  document.getElementById('gyAx').innerHTML=ah;
+  drawPiezo(pzOn);drawGyro(gyOn);
+}
+function drawPiezo(on){
+  var c=document.getElementById('pzCv');if(!c||!c.offsetParent)return;
+  var f=fit(c,104),x=f.x,W=f.w,H=f.h,mid=H/2,sv=sens('vib');x.clearRect(0,0,W,H);
+  var h=HIST.vib,pk=h.length?Math.max.apply(null,h):0,ym=Math.max(10,pk*1.15),sc=(mid-4)/ym;
+  // limit lines at ±watch and ±action
+  x.save();x.setLineDash([3,4]);x.lineWidth=1;
+  [[sv.warn,'--gold'],[sv.bad,'--coral']].forEach(function(l){x.strokeStyle=cv(l[1]);x.globalAlpha=.7;x.beginPath();
+    x.moveTo(0,mid-l[0]*sc);x.lineTo(W,mid-l[0]*sc);x.moveTo(0,mid+l[0]*sc);x.lineTo(W,mid+l[0]*sc);x.stroke();});
+  x.restore();
+  x.strokeStyle=cv('--line2');x.beginPath();x.moveTo(0,mid+.5);x.lineTo(W,mid+.5);x.stroke();
+  if(!on){x.fillStyle=cv('--dim');x.font='12px '+FS;x.textAlign='center';x.fillText(t('noData'),W/2,mid-8);return;}
+  // mirrored bars: a seismograph-style trace of peak particle velocity, newest on the right
+  var n=HLEN,bw=W/n;
+  h.forEach(function(v,i){var st=stOf(sv,v),bx=W-(h.length-i)*bw,bh=Math.max(1,v*sc);
+    x.fillStyle=cv(st==='bad'?'--coral':(st==='warn'?'--gold':'--cyan'));x.globalAlpha=i===h.length-1?1:.35+.55*(i/h.length);
+    x.fillRect(bx+bw*.18,mid-bh,bw*.64,bh*2);});
+  x.globalAlpha=1;x.fillStyle=cv('--dim');x.font='10.5px '+FM;x.textAlign='left';
+  x.fillText(sv.warn,3,mid-sv.warn*sc-3);x.fillText(sv.bad,3,mid-sv.bad*sc-3);
+}
+function drawGyro(on){
+  var c=document.getElementById('gyCv');if(!c||!c.offsetParent)return;
+  var d=window.devicePixelRatio||1,S0=128;
+  if(c._d!==d){c.width=S0*d;c.height=S0*d;c._d=d;}
+  var x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,S0,S0);
+  var cx=S0/2,cy=S0/2,Rr=58,full=1.5,k=Rr/full,sv=sens('tilt');
+  // zones: stable inside 0.5°, watch to 1°, action beyond
+  x.fillStyle=hexA(cv('--coral'),.10);x.beginPath();x.arc(cx,cy,Rr,0,Math.PI*2);x.fill();
+  x.fillStyle=hexA(cv('--gold'),.12);x.beginPath();x.arc(cx,cy,sv.bad*k,0,Math.PI*2);x.fill();
+  x.fillStyle=cv('--tile');x.beginPath();x.arc(cx,cy,sv.warn*k,0,Math.PI*2);x.fill();
+  x.fillStyle=hexA(cv('--mint'),.10);x.beginPath();x.arc(cx,cy,sv.warn*k,0,Math.PI*2);x.fill();
+  x.lineWidth=1;[[sv.warn,'--gold'],[sv.bad,'--coral'],[full,'--line2']].forEach(function(r){
+    x.strokeStyle=cv(r[1]);x.globalAlpha=r[1]==='--line2'?1:.6;x.beginPath();x.arc(cx,cy,r[0]*k,0,Math.PI*2);x.stroke();});
+  x.globalAlpha=1;x.strokeStyle=cv('--line2');x.beginPath();x.moveTo(cx-Rr,cy);x.lineTo(cx+Rr,cy);x.moveTo(cx,cy-Rr);x.lineTo(cx,cy+Rr);x.stroke();
+  x.fillStyle=cv('--dim');x.font='9.5px '+FM;x.textAlign='left';
+  x.fillText('0.5°',cx+3,cy-sv.warn*k+10);x.fillText('1°',cx+3,cy-sv.bad*k+10);
+  x.textAlign='center';x.fillText('X',cx+Rr-6,cy-4);x.fillText('Y',cx+7,cy-Rr+10);
+  if(!on)return;
+  function P(tx,ty){var r=Math.sqrt(tx*tx+ty*ty),s2=r>full?full/r:1;return [cx+tx*s2*k,cy-ty*s2*k];}
+  // trail of recent tilt, fading out
+  var n=HIST.tx.length;
+  for(var i=1;i<n;i++){var a=P(HIST.tx[i-1],HIST.ty[i-1]),b=P(HIST.tx[i],HIST.ty[i]);
+    x.strokeStyle=cv('--muted');x.globalAlpha=.08+.5*(i/n);x.lineWidth=1.4;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
+  x.globalAlpha=1;
+  var st=stOf(sv,S.tilt),col=cv(st==='bad'?'--coral':(st==='warn'?'--gold':'--mint')),p=P(GY.tx,GY.ty);
+  x.fillStyle=hexA(col,.25);x.beginPath();x.arc(p[0],p[1],9,0,Math.PI*2);x.fill();
+  x.fillStyle=cv('--surface');x.beginPath();x.arc(p[0],p[1],5.5,0,Math.PI*2);x.fill();
+  x.fillStyle=col;x.beginPath();x.arc(p[0],p[1],4,0,Math.PI*2);x.fill();
+}
+function renderAll(){renderStrip();renderMotion();renderHero();renderAl();renderMon();draw();}
+setInterval(function(){
+  if(MODE==='sim'&&running){step();watch();renderAll();
+    document.getElementById('fSync').textContent=new Date().toLocaleTimeString([],{hour12:false});}
+  else if(MODE==='serial'&&document.getElementById('app').classList.contains('on'))serTick();
+},1400);
+setInterval(function(){ if(!running)return;var s=Math.floor((Date.now()-t0)/1000);
+  document.getElementById('fUp').textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60]
+    .map(function(n){return String(n).padStart(2,'0');}).join(':');},1000);
+window.addEventListener('resize',draw);
+// canvas text needs the Devanagari/Odia webfonts; redraw once they arrive
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
+
+/* ======================= USB SERIAL (Web Serial API) ======================= */
+var SER_OK=('serial' in navigator);
+var SER={port:null,info:null,baud:115200,reader:null,loop:null,keep:false,state:'idle',
+         lines:[],n:0,bad:0,got:false,fresh:false,lastData:0,staleWarned:false,has:{}};
+/* key aliases accepted from the receiver; unknown keys are ignored */
+var ALIAS={ch4:'ch4',methane:'ch4',ch4_pct:'ch4', co:'co',co_ppm:'co', co2:'co2',co2_pct:'co2',
+  o2:'o2',oxygen:'o2',o2_pct:'o2', tmp:'tmp',temp:'tmp',temperature:'tmp', rh:'rh',hum:'rh',humidity:'rh',
+  vel:'vel',air:'vel',airflow:'vel',velocity:'vel', vib:'vib',vibration:'vib',vib_rms:'vib',piezo:'vib',ppv:'vib',
+  prs:'prs',pressure:'prs',baro:'prs',press:'prs',hpa:'prs',
+  gx:'gx',gyro_x:'gx',gyrx:'gx', gy:'gy',gyro_y:'gy',gyry:'gy', gz:'gz',gyro_z:'gz',gyrz:'gz',
+  tx:'tx',tilt_x:'tx',pitch:'tx', ty:'ty',tilt_y:'ty',roll:'ty', tilt:'tilt',
+  node:'node',id:'node',nid:'node',node_id:'node'};
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function hasCh(k){return MODE!=='serial'||!!SER.has[k];}
+function visNodes(){return MODE==='serial'?NODES.filter(function(n){return n.seen;}):NODES;}
+function normNode(id){id=String(id).trim().toUpperCase();
+  if(/^\d+$/.test(id))return 'N-'+id; var m=id.match(/^N-?(\d+)$/); return m?'N-'+m[1]:id;}
+
+/* Live gateway card: Network (HTTP) or USB serial */
+var CONN='net';
+try{var sc=localStorage.getItem('vayu-conn');if(sc==='usb'&&SER_OK)CONN='usb';}catch(e){}
+function setConn(c){
+  if(c==='usb'&&!SER_OK)c='net';
+  CONN=c;
+  document.querySelectorAll('.conn button').forEach(function(b){
+    b.setAttribute('aria-pressed',b.getAttribute('data-conn')===c?'true':'false');});
+  document.getElementById('connNet').hidden=(c!=='net');
+  document.getElementById('connUsb').hidden=(c!=='usb');
+  var go=document.getElementById('btnLive'),k=c==='usb'?'serGo':'liveGo';
+  go.setAttribute('data-i18n',k);go.textContent=t(k);
+  try{localStorage.setItem('vayu-conn',c);}catch(e){}
+}
+function serSupportNote(){
+  var el=document.getElementById('serNote'),ub=document.querySelector('.conn button[data-conn="usb"]');
+  if(SER_OK){el.hidden=true;ub.disabled=false;return;}
+  ub.disabled=true;el.hidden=false;el.textContent=t('serTitle')+': '+t(window.isSecureContext?'serNo':'serSecure');
+}
+
+/* one line from the receiver: JSON object, or key=value / key:value pairs */
+function parseLine(line){
+  var o=null;
+  if(line.charAt(0)==='{'){try{o=JSON.parse(line);}catch(e){return null;}}
+  else{o={};line.split(/[,;\s]+/).forEach(function(tok){
+    var m=tok.match(/^([A-Za-z_][\w-]*)[:=](.+)$/);if(m)o[m[1]]=m[2];});}
+  if(!o||typeof o!=='object')return null;
+  var out={v:{},node:null},hit=0;
+  for(var k in o){var key=ALIAS[k.toLowerCase()];if(!key)continue;
+    if(key==='node'){out.node=normNode(o[k]);continue;}
+    var num=parseFloat(o[k]);if(isFinite(num)){out.v[key]=num;hit++;}}
+  return hit?out:null;
+}
+function onLine(line){
+  line=line.trim();if(!line)return;
+  SER.n++;SER.lines.push(line);if(SER.lines.length>60)SER.lines.shift();
+  var d=parseLine(line);if(!d){SER.bad++;return;}
+  var now=Date.now();
+  for(var k in d.v){var v=d.v[k];
+    if(k in GY){GY[k]=v;SER.has[k==='gx'||k==='gy'||k==='gz'?'gyr':'tilt']=true;continue;}
+    if(k==='tilt'){GY.tx=v;GY.ty=0;SER.has.tilt=true;continue;}
+    if(k==='prs'){if(v>20000)v/=100; /* sent in Pa */ PRS.push({t:now,v:v});if(PRS.length>400)PRS.shift();SER.has.dprs=true;}
+    S[k]=Math.max(0,v);SER.has[k]=true;}
+  derive();
+  if(d.node){var nd=NODES.filter(function(n){return n.id===d.node;})[0];
+    if(nd){if(!nd.seen)pushAl('i','aNodeNew',{id:nd.id});nd.seen=now;}}
+  else NODES.forEach(function(n){n.seen=now;}); // no node id: treat as the panel aggregate
+  SER.lastData=now;SER.fresh=true;SER.staleWarned=false;
+  if(!SER.got){SER.got=true;running=true;t0=now;pushAl('i','aSerFirst');setSerState('live');renderAll();}
+  else if(SER.state!=='live')setSerState('live');
+}
+async function readLoop(){
+  var p=SER.port,dec=new TextDecoder(),buf='';
+  while(SER.keep&&p.readable){
+    SER.reader=p.readable.getReader();
+    try{
+      for(;;){var r=await SER.reader.read();if(r.done)break;
+        buf+=dec.decode(r.value,{stream:true});
+        var parts=buf.split(/\r?\n/);buf=parts.pop();
+        if(buf.length>4096)buf=''; // runaway line with no newline: drop it
+        parts.forEach(onLine);}
+    }catch(e){/* framing/parity/break errors are recoverable; a lost device ends the loop */}
+    finally{try{SER.reader.releaseLock();}catch(e){}SER.reader=null;}
+  }
+  if(SER.keep){ // the stream ended without us asking: cable pulled or device reset
+    SER.keep=false;try{await p.close();}catch(e){}
+    setSerState('lost');pushAl('c','aSerLost');renderAll();
+  }
+}
+async function openSerial(){
+  setSerState('opening');
+  try{await SER.port.open({baudRate:SER.baud,bufferSize:16384});}
+  catch(e){setSerState('lost');pushAl('c','aSerErr',{m:e.message||e.name});renderAll();return;}
+  try{SER.info=SER.port.getInfo();}catch(e){}
+  pushAl('i','aSerOpen',{b:SER.baud});
+  setSerState(SER.got?'live':'waiting');SER.keep=true;SER.lastData=Date.now();
+  document.getElementById('fSrc').textContent=t('serialMode')+' · '+SER.baud;
+  renderAll();
+  SER.loop=readLoop();
+}
+async function closeSerial(){
+  SER.keep=false;
+  if(SER.reader){try{await SER.reader.cancel();}catch(e){}}
+  if(SER.loop){try{await SER.loop;}catch(e){}}
+  if(SER.port){try{await SER.port.close();}catch(e){}}
+}
+function setSerState(st){
+  SER.state=st;if(MODE!=='serial')return;
+  var chip=document.getElementById('modeChip'),led=chip.querySelector('.led'),
+      key={opening:'serOpening',waiting:'serWaiting',live:'serLive',lost:'serLost'}[st]||'serWaiting';
+  chip.setAttribute('data-t',st==='lost'?'bad':(st==='live'?'ok':'warn'));
+  led.classList.toggle('pulse',st==='live'||st==='waiting');
+  document.getElementById('modeTxt').textContent=t('serialMode')+' · '+t(key);
+  var b=document.getElementById('btnPort');
+  b.textContent=t(st==='lost'?'reconnect':'disconnect');b.disabled=(st==='opening');
+}
+function serTick(){
+  if(SER.fresh){
+    SER.fresh=false;tick++;
+    pushHist();
+    watch();
+    document.getElementById('fSync').textContent=new Date(SER.lastData).toLocaleTimeString([],{hour12:false});
+  }else if(SER.state==='live'&&Date.now()-SER.lastData>15000&&!SER.staleWarned){
+    SER.staleWarned=true;pushAl('w','aSerStale',{s:15});setSerState('waiting');
+  }
+  renderAll();
+}
+function renderMon(){
+  var card=document.getElementById('monCard');card.hidden=(MODE!=='serial');
+  if(MODE!=='serial')return;
+  var pre=document.getElementById('monPre'),atEnd=pre.scrollHeight-pre.scrollTop-pre.clientHeight<24;
+  pre.textContent=SER.lines.length?SER.lines.join('\n'):t('monEmpty');
+  if(atEnd)pre.scrollTop=pre.scrollHeight;
+  document.getElementById('monRt').textContent=t('monStat',{n:SER.n,b:SER.bad});
+}
+function startSerial(){
+  if(!SER_OK)return;
+  var baud=+document.getElementById('baudSel').value||115200;
+  // requestPort must run inside the click so the browser shows its port picker
+  navigator.serial.requestPort().then(function(port){
+    SER.port=port;SER.baud=baud;enter('serial');openSerial();
+  }).catch(function(){/* picker cancelled: stay on the home page */});
+}
+function reconnectSerial(){
+  if(SER.state!=='lost'){closeSerial().then(function(){setSerState('lost');renderAll();});return;}
+  navigator.serial.getPorts().then(function(ps){
+    var inf=SER.info||{},m=ps.filter(function(p){var i=p.getInfo();
+      return p===SER.port||(inf.usbVendorId&&i.usbVendorId===inf.usbVendorId&&i.usbProductId===inf.usbProductId);})[0];
+    return m||navigator.serial.requestPort();
+  }).then(function(p){SER.port=p;openSerial();}).catch(function(){});
+}
+if(SER_OK)navigator.serial.addEventListener('connect',function(e){
+  // the same receiver plugged back in: reopen it without asking
+  if(MODE!=='serial'||SER.state!=='lost'||!SER.info)return;
+  var i=e.target.getInfo();
+  if(i.usbVendorId===SER.info.usbVendorId&&i.usbProductId===SER.info.usbProductId){SER.port=e.target;openSerial();}
+});
+
+function enter(m){
+  MODE=m;document.getElementById('home').classList.add('off');
+  document.getElementById('app').classList.add('on');t0=Date.now();
+  var chip=document.getElementById('modeChip'),mt=document.getElementById('modeTxt');
+  document.getElementById('btnScn').hidden=(m!=='sim');
+  document.getElementById('btnPort').hidden=(m!=='serial');
+  if(m==='sim'){running=true;chip.setAttribute('data-t','sim');
+    chip.querySelector('.led').classList.remove('pulse');
+    mt.setAttribute('data-i18n','simulated');mt.textContent=t('simulated');
+    document.getElementById('fSrc').textContent=t('simPanel');
+    ALERTS=[];last={};PEND={};pushAl('i','aSim');
+    SENSORS.forEach(function(s){S[s.k]=s.base;HIST[s.k]=[];});resetAux();
+    for(var i=0;i<26;i++)step();
+  }else if(m==='serial'){running=false;mt.removeAttribute('data-i18n');
+    ALERTS=[];last={};PEND={};tick=0;
+    SER.lines=[];SER.n=0;SER.bad=0;SER.got=false;SER.fresh=false;SER.has={};SER.staleWarned=false;
+    NODES.forEach(function(n){n.seen=0;});
+    SENSORS.forEach(function(s){S[s.k]=s.base;HIST[s.k]=[];});resetAux();derive();
+    document.getElementById('fSrc').textContent=t('serialMode');
+    document.getElementById('fSync').textContent=t('never');
+    setSerState('opening');
+  }else{running=false;chip.setAttribute('data-t','ok');
+    mt.setAttribute('data-i18n','liveGw');mt.textContent=t('liveGw');
+    chip.querySelector('.led').classList.add('pulse');
+    document.getElementById('fSrc').textContent=document.getElementById('gwUrl').value||t('gateway');
+    document.getElementById('fSync').textContent=t('never');}
+  requestAnimationFrame(function(){renderAll();});
+}
+/* whole source card is clickable; its inner input/select stay usable */
+[['cardSim',function(){enter('sim');}],['cardLive',function(){if(CONN==='usb')startSerial();else enter('live');}]].forEach(function(c){
+  document.getElementById(c[0]).addEventListener('click',function(e){
+    if(e.target.closest('input,select,label,.conn'))return;
+    c[1]();});
+});
+document.querySelectorAll('.conn button').forEach(function(b){
+  b.addEventListener('click',function(){setConn(b.getAttribute('data-conn'));});});
+setConn(CONN);
+document.getElementById('btnPort').addEventListener('click',reconnectSerial);
+document.getElementById('btnHome').addEventListener('click',function(){
+  if(MODE==='serial')closeSerial();
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('home').classList.remove('off');running=false;});
+document.getElementById('btnScn').addEventListener('click',function(){
+  if(MODE!=='sim')return;
+  scn=30;
+  // seed an immediate step change so the forecast reacts inside a demo window
+  S.vib=Math.max(S.vib,4.4); S.ch4=Math.max(S.ch4,0.86); S.co=Math.max(S.co,34);
+  pushAl('w','aScn');
+  renderAll();});
+document.getElementById('zoneSel').addEventListener('change',function(){
+  if(MODE!=='sim')return;
+  SENSORS.forEach(function(s){if(!s.der&&s.k!=='prs')S[s.k]=s.base*(.9+Math.random()*.25);});
+  pushAl('i','aZone',{zi:this.selectedIndex});renderAll();});
+
+applyLang(LANG);
+})();
+</script>
+</body>
+</html>
